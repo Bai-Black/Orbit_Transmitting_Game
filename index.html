@@ -40,6 +40,7 @@ let stars = [];
 let gameState = 'TITLE';
 let winTimer = 0;
 let keys = {};
+let pauseBtnRects = [];
 
 const ORBIT_R_OFFSET = 120;
 const WIN_DIST_MIN = 80;
@@ -293,6 +294,10 @@ function drawHUD() {
   ctx.fillText('距 B: ' + dist2.toFixed(0), 12, 56);
   ctx.fillText('油门: ' + bar + ' ' + (ship.throttle * 100).toFixed(0) + '%', 12, 72);
 
+  ctx.fillStyle = '#555';
+  ctx.font = '10px monospace';
+  ctx.fillText('ESC/空格 暂停', 12, 90);
+
   if (gameState === 'PLAYING' && winTimer > 0) {
     ctx.fillStyle = '#fff';
     ctx.font = '14px monospace';
@@ -366,6 +371,46 @@ function drawOverlay(title, subtitle) {
   }
 }
 
+function togglePause() {
+  if (gameState === 'PLAYING') {
+    gameState = 'PAUSED';
+    keys = {};
+  } else if (gameState === 'PAUSED') {
+    gameState = 'PLAYING';
+  }
+}
+
+function drawPause() {
+  ctx.fillStyle = 'rgba(0,0,0,0.75)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 36px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('暂 停', canvas.width / 2, canvas.height / 2 - 60);
+
+  pauseBtnRects = [];
+  const bw = 180, bh = 40;
+  const cx = canvas.width / 2;
+
+  const continueY = canvas.height / 2 - 10;
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(cx - bw / 2, continueY, bw, bh);
+  ctx.fillStyle = '#fff';
+  ctx.font = '16px monospace';
+  ctx.fillText('继 续', cx, continueY + 27);
+  pauseBtnRects.push({ x: cx - bw / 2, y: continueY, w: bw, h: bh, action: 'resume' });
+
+  const restartY = canvas.height / 2 + 50;
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(cx - bw / 2, restartY, bw, bh);
+  ctx.fillStyle = '#fff';
+  ctx.fillText('重新开始', cx, restartY + 27);
+  pauseBtnRects.push({ x: cx - bw / 2, y: restartY, w: bw, h: bh, action: 'restart' });
+}
+
 function render() {
   if (gameState === 'TITLE') {
     drawTitle();
@@ -384,6 +429,7 @@ function render() {
 
   if (gameState === 'WIN') drawOverlay('任 务 完 成', '成功变轨至目标天体');
   if (gameState === 'CRASH') drawOverlay('坠 毁', '飞行器撞击天体表面');
+  if (gameState === 'PAUSED') drawPause();
 }
 
 function gameLoop() {
@@ -394,9 +440,11 @@ function gameLoop() {
 
 window.addEventListener('keydown', function(e) {
   keys[e.code] = true;
-  if (e.code === 'Space') {
+  if (e.code === 'Space' || e.code === 'Escape') {
     e.preventDefault();
-    if (gameState === 'TITLE' || gameState === 'WIN' || gameState === 'CRASH') {
+    if (gameState === 'PLAYING' || gameState === 'PAUSED') {
+      togglePause();
+    } else if (gameState === 'TITLE' || gameState === 'WIN' || gameState === 'CRASH') {
       resetGame();
     }
   }
@@ -408,6 +456,22 @@ window.addEventListener('keydown', function(e) {
 window.addEventListener('keyup', function(e) {
   keys[e.code] = false;
 });
+
+canvas.addEventListener('click', function(e) {
+  if (gameState !== 'PAUSED') return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  for (const btn of pauseBtnRects) {
+    if (mx >= btn.x && mx <= btn.x + btn.w && my >= btn.y && my <= btn.y + btn.h) {
+      if (btn.action === 'resume') gameState = 'PLAYING';
+      else if (btn.action === 'restart') resetGame();
+      break;
+    }
+  }
+});
+
+canvas.style.cursor = 'pointer';
 
 generateStars();
 initShip();
