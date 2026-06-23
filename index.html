@@ -420,6 +420,42 @@ function drawPause() {
   pauseBtnRects.push({ x: cx - bw / 2, y: restartY, w: bw, h: bh, action: 'restart' });
 }
 
+function drawOffscreenIndicator() {
+  const target = bodies[1];
+  const sx = target.x - camX + canvas.width / 2;
+  const sy = target.y - camY + canvas.height / 2;
+  const margin = 40;
+
+  if (sx >= 0 && sx <= canvas.width && sy >= 0 && sy <= canvas.height) return;
+
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  const angle = Math.atan2(target.y - camY, target.x - camX);
+  const edgeX = Math.max(margin, Math.min(canvas.width - margin, cx + Math.cos(angle) * (canvas.width / 2 - margin)));
+  const edgeY = Math.max(margin, Math.min(canvas.height - margin, cy + Math.sin(angle) * (canvas.height / 2 - margin)));
+
+  ctx.save();
+  ctx.translate(edgeX, edgeY);
+  ctx.rotate(angle);
+
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.moveTo(12, 0);
+  ctx.lineTo(-4, -6);
+  ctx.lineTo(-4, 6);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+
+  const dist = Math.sqrt((target.x - ship.x) ** 2 + (target.y - ship.y) ** 2);
+  ctx.fillStyle = '#888';
+  ctx.font = '10px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('天体 B', edgeX, edgeY - 12);
+  ctx.fillText(Math.floor(dist), edgeX, edgeY + 18);
+}
+
 function render() {
   if (gameState === 'TITLE') {
     drawTitle();
@@ -435,6 +471,7 @@ function render() {
   for (const b of bodies) drawBody(b);
   drawShip();
   drawHUD();
+  drawOffscreenIndicator();
 
   if (gameState === 'WIN') drawOverlay('任 务 完 成', '成功变轨至目标天体');
   if (gameState === 'CRASH') drawOverlay('坠 毁', '飞行器撞击天体表面');
