@@ -298,6 +298,15 @@ function drawHUD() {
   ctx.font = '10px monospace';
   ctx.fillText('ESC/空格 暂停', 12, 90);
 
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#666';
+  ctx.font = '10px monospace';
+  const rx = canvas.width - 12;
+  ctx.fillText('<- ->  旋转姿态', rx, canvas.height - 52);
+  ctx.fillText('^ v   控制油门', rx, canvas.height - 38);
+  ctx.fillText('空格/ESC 暂停', rx, canvas.height - 24);
+  ctx.textAlign = 'left';
+
   if (gameState === 'PLAYING' && winTimer > 0) {
     ctx.fillStyle = '#fff';
     ctx.font = '14px monospace';
