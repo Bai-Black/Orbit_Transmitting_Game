@@ -256,12 +256,12 @@ function update(dt) {
     orbitData = { points, analysis };
 
     if (ship.throttle < 0.01 && analysis) {
-      const periOk = Math.abs(analysis.periAlt - lastPeriAlt) < 10;
-      const apoOk = Math.abs(analysis.apoAlt - lastApoAlt) < 10;
+      const periOk = lastPeriAlt < 0 || Math.abs(analysis.periAlt - lastPeriAlt) < 15;
+      const apoOk = lastApoAlt < 0 || Math.abs(analysis.apoAlt - lastApoAlt) < 15;
       lastPeriAlt = analysis.periAlt;
       lastApoAlt = analysis.apoAlt;
 
-      if (analysis.closed && periOk && apoOk) {
+      if (periOk && apoOk) {
         stabilityConfirmCount++;
         if (stabilityConfirmCount >= STABILITY_CONFIRM_FRAMES) {
           orbitStable = true;
@@ -452,10 +452,10 @@ function drawHUD() {
     ctx.fillText('apoAlt: ' + a.apoAlt.toFixed(1), 12, dy); dy += 14;
     ctx.fillText('lastPeri: ' + lastPeriAlt.toFixed(1), 12, dy); dy += 14;
     ctx.fillText('lastApo: ' + lastApoAlt.toFixed(1), 12, dy); dy += 14;
-    const periDiff = Math.abs(a.periAlt - lastPeriAlt);
-    const apoDiff = Math.abs(a.apoAlt - lastApoAlt);
-    ctx.fillText('periDiff: ' + periDiff.toFixed(1) + (periDiff < 10 ? ' OK' : ' FAIL'), 12, dy); dy += 14;
-    ctx.fillText('apoDiff: ' + apoDiff.toFixed(1) + (apoDiff < 10 ? ' OK' : ' FAIL'), 12, dy); dy += 14;
+    const periDiff = lastPeriAlt < 0 ? 0 : Math.abs(a.periAlt - lastPeriAlt);
+    const apoDiff = lastApoAlt < 0 ? 0 : Math.abs(a.apoAlt - lastApoAlt);
+    ctx.fillText('periDiff: ' + periDiff.toFixed(1) + (periDiff < 15 ? ' OK' : ' FAIL'), 12, dy); dy += 14;
+    ctx.fillText('apoDiff: ' + apoDiff.toFixed(1) + (apoDiff < 15 ? ' OK' : ' FAIL'), 12, dy); dy += 14;
     ctx.fillText('confirm: ' + stabilityConfirmCount + '/' + STABILITY_CONFIRM_FRAMES, 12, dy); dy += 14;
     ctx.fillText('stable: ' + orbitStable, 12, dy); dy += 14;
     ctx.fillText('throttle: ' + ship.throttle.toFixed(3), 12, dy);
