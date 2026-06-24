@@ -55,6 +55,7 @@ let orbitAngleTotal = 0;
 let orbitWinQueued = false;
 let orbitStabilityHistory = [];
 let orbitStable = false;
+let dominantBody = bodies[0];
 
 function generateStars() {
   stars = [];
@@ -108,7 +109,7 @@ function predictOrbit(body) {
   const points = [];
   let px = ship.x, py = ship.y;
   let pvx = ship.vx, pvy = ship.vy;
-  const steps = 600;
+  const steps = 1200;
   const dt = FIXED_DT;
   for (let i = 0; i < steps; i++) {
     points.push({ x: px, y: py });
@@ -143,7 +144,7 @@ function analyzeOrbit(points, body) {
   const closeDy = last.y - first.y;
   const closeDist = Math.sqrt(closeDx * closeDx + closeDy * closeDy);
   const avgR = (minDist + maxDist) / 2;
-  const closed = closeDist < avgR * 0.2;
+  const closed = closeDist < avgR * 0.3;
 
   const periAlt = minDist - body.radius;
   const apoAlt = maxDist - body.radius;
@@ -177,7 +178,7 @@ function update(dt) {
 
   let ax = 0, ay = 0;
   let minDist = Infinity;
-  let dominantBody = bodies[0];
+  dominantBody = bodies[0];
   for (const b of bodies) {
     const dx = ship.x - b.x;
     const dy = ship.y - b.y;
@@ -438,11 +439,11 @@ function drawHUD() {
           ctx.fillText('天体B轨道 · 稳定 · 准备入轨', cx, bottom);
         }
       } else if (a.closed && orbitStable) {
-        ctx.fillText('天体B轨道 · 稳定 · 高度不符', cx, bottom);
+        ctx.fillText('天体B轨道 · 稳定 · 高度不符 (近:' + a.periAlt.toFixed(0) + ' 远:' + a.apoAlt.toFixed(0) + ')', cx, bottom);
       } else if (a.closed) {
         ctx.fillText('天体B轨道 · 未稳定 · 轨道漂移中', cx, bottom);
       } else {
-        ctx.fillText('天体B区域 · 轨道预测中...', cx, bottom);
+        ctx.fillText('天体B区域 · 轨道未闭合 · 调整油门与姿态', cx, bottom);
       }
     } else if (dominantBody === bodies[0]) {
       const dx0 = ship.x - bodies[0].x;
