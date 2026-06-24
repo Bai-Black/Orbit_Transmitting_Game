@@ -49,14 +49,17 @@ const TARGET_ORBIT_MAX = 300;
 const ORBIT_MIN = 40;
 const ORBIT_MAX = 500;
 const ESCAPE_DIST = 3000;
+const STABILITY_POS_THRESHOLD = 0.05;
+const STABILITY_VEL_THRESHOLD = 0.05;
+const STABILITY_CONFIRM_FRAMES = 10;
 
 let orbitData = null;
 let orbitReady = false;
 let orbitAngleStart = 0;
 let orbitAngleTotal = 0;
 let orbitWinQueued = false;
-let orbitStabilityHistory = [];
 let orbitStable = false;
+let stabilityConfirmCount = 0;
 let dominantBody = bodies[0];
 let prevDominantBody = bodies[0];
 
@@ -87,8 +90,8 @@ function initShip() {
   orbitAngleStart = 0;
   orbitAngleTotal = 0;
   orbitWinQueued = false;
-  orbitStabilityHistory = [];
   orbitStable = false;
+  stabilityConfirmCount = 0;
   dominantBody = bodies[0];
   prevDominantBody = bodies[0];
 }
@@ -248,28 +251,46 @@ function update(dt) {
     const analysis = analyzeOrbit(points, bodies[1]);
     orbitData = { points, analysis };
 
-    if (analysis && analysis.closed) {
-      orbitStabilityHistory.push({ peri: analysis.periAlt, apo: analysis.apoAlt });
-      if (orbitStabilityHistory.length > 30) orbitStabilityHistory.shift();
-
-      if (orbitStabilityHistory.length >= 15) {
-        let periSum = 0, apoSum = 0;
-        for (const h of orbitStabilityHistory) { periSum += h.peri; apoSum += h.apo; }
-        const periAvg = periSum / orbitStabilityHistory.length;
-        const apoAvg = apoSum / orbitStabilityHistory.length;
-        let periVar = 0, apoVar = 0;
-        for (const h of orbitStabilityHistory) {
-          periVar += (h.peri - periAvg) ** 2;
-          apoVar += (h.apo - apoAvg) ** 2;
-        }
-        periVar = Math.sqrt(periVar / orbitStabilityHistory.length);
-        apoVar = Math.sqrt(apoVar / orbitStabilityHistory.length);
-        orbitStable = periVar < 15 && apoVar < 15;
-      } else {
-        orbitStable = false;
+    if (analysis && analysis.closed && ship.throttle < 0.01) {
+      let minPosDist = Infinity;
+      let closestIdx = -1;
+      for (let i = 10; i < points.length; i++) {
+        const dx = points[i].x - ship.x;
+        const dy = points[i].y - ship.y;
+        const d = Math.sqrt(dx * dx + dy * dy);
+        if (d < minPosDist) { minPosDist = d; closestIdx = i; }
       }
+
+      if (closestIdx > 0) {
+        const orbitalSpeed = Math.sqrt(G * bodies[1].mass / dist2);
+        const posThreshold = dist2 * STABILITY_POS_THRESHOLD;
+        const velThreshold = orbitalSpeed * STABILITY_VEL_THRESHOLD;
+
+        const posOk = minPosDist < posThreshold;
+
+        const cp = points[closestIdx];
+        const cn = points[Math.min(closestIdx + 1, points.length - 1)];
+        const cvx = (cn.x - cp.x) / FIXED_DT;
+        const cvy = (cn.y - cp.y) / FIXED_DT;
+        const dvx = cvx - ship.vx;
+        const dvy = cvy - ship.vy;
+        const velDiff = Math.sqrt(dvx * dvx + dvy * dvy);
+        const velOk = velDiff < velThreshold;
+
+        if (posOk && velOk) {
+          stabilityConfirmCount++;
+          if (stabilityConfirmCount >= STABILITY_CONFIRM_FRAMES) {
+            orbitStable = true;
+          }
+        } else {
+          stabilityConfirmCount = Math.max(0, stabilityConfirmCount - 1);
+          if (stabilityConfirmCount === 0) orbitStable = false;
+        }
+      }
+    } else if (ship.throttle >= 0.01) {
+      stabilityConfirmCount = Math.max(0, stabilityConfirmCount - 1);
     } else {
-      orbitStabilityHistory = [];
+      stabilityConfirmCount = 0;
       orbitStable = false;
     }
 
