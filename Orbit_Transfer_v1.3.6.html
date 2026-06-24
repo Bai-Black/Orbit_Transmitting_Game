@@ -60,6 +60,8 @@ let orbitAngleTotal = 0;
 let orbitWinQueued = false;
 let orbitStable = false;
 let stabilityConfirmCount = 0;
+let lastPeriAlt = -1;
+let lastApoAlt = -1;
 let dominantBody = bodies[0];
 let prevDominantBody = bodies[0];
 
@@ -92,6 +94,8 @@ function initShip() {
   orbitWinQueued = false;
   orbitStable = false;
   stabilityConfirmCount = 0;
+  lastPeriAlt = -1;
+  lastApoAlt = -1;
   dominantBody = bodies[0];
   prevDominantBody = bodies[0];
 }
@@ -251,49 +255,26 @@ function update(dt) {
     const analysis = analyzeOrbit(points, bodies[1]);
     orbitData = { points, analysis };
 
-    if (ship.throttle < 0.01 && analysis && points.length > 20) {
-      let minPosDist = Infinity;
-      let closestIdx = -1;
-      for (let i = 5; i < points.length; i++) {
-        const dx = points[i].x - ship.x;
-        const dy = points[i].y - ship.y;
-        const d = Math.sqrt(dx * dx + dy * dy);
-        if (d < minPosDist) { minPosDist = d; closestIdx = i; }
-      }
+    if (ship.throttle < 0.01 && analysis) {
+      const periOk = Math.abs(analysis.periAlt - lastPeriAlt) < 10;
+      const apoOk = Math.abs(analysis.apoAlt - lastApoAlt) < 10;
+      lastPeriAlt = analysis.periAlt;
+      lastApoAlt = analysis.apoAlt;
 
-      if (closestIdx > 0) {
-        const avgR = (analysis.periAlt + analysis.apoAlt) / 2 + bodies[1].radius;
-        const posThreshold = avgR * STABILITY_POS_THRESHOLD;
-
-        const posOk = minPosDist < posThreshold;
-
-        const cp = points[closestIdx];
-        const cn = points[Math.min(closestIdx + 1, points.length - 1)];
-        const cvx = (cn.x - cp.x) / FIXED_DT;
-        const cvy = (cn.y - cp.y) / FIXED_DT;
-        const rNow = dist2;
-        const rPred = Math.sqrt((cp.x - bodies[1].x) ** 2 + (cp.y - bodies[1].y) ** 2);
-        const vNow2 = ship.vx * ship.vx + ship.vy * ship.vy;
-        const vPred2 = cvx * cvx + cvy * cvy;
-        const eNow = vNow2 / 2 - G * bodies[1].mass / rNow;
-        const ePred = vPred2 / 2 - G * bodies[1].mass / rPred;
-        const eDiff = Math.abs(eNow - ePred);
-        const eThreshold = G * bodies[1].mass / avgR * 0.05;
-        const energyOk = eDiff < eThreshold;
-
-        if (posOk && energyOk) {
-          stabilityConfirmCount++;
-          if (stabilityConfirmCount >= STABILITY_CONFIRM_FRAMES) {
-            orbitStable = true;
-          }
-        } else {
-          stabilityConfirmCount = Math.max(0, stabilityConfirmCount - 1);
-          if (stabilityConfirmCount === 0) orbitStable = false;
+      if (analysis.closed && periOk && apoOk) {
+        stabilityConfirmCount++;
+        if (stabilityConfirmCount >= STABILITY_CONFIRM_FRAMES) {
+          orbitStable = true;
         }
+      } else {
+        stabilityConfirmCount = Math.max(0, stabilityConfirmCount - 1);
+        if (stabilityConfirmCount === 0) orbitStable = false;
       }
     } else if (ship.throttle >= 0.01) {
       orbitStable = false;
       stabilityConfirmCount = 0;
+      lastPeriAlt = -1;
+      lastApoAlt = -1;
     }
 
     if (analysis && analysis.closed && analysis.periAlt > TARGET_ORBIT_MIN && analysis.apoAlt < TARGET_ORBIT_MAX && orbitStable) {
