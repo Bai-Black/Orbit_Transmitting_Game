@@ -261,7 +261,7 @@ function update(dt) {
       lastPeriAlt = analysis.periAlt;
       lastApoAlt = analysis.apoAlt;
 
-      if (periOk && apoOk) {
+      if (periOk && apoOk && analysis.closed) {
         stabilityConfirmCount++;
         if (stabilityConfirmCount >= STABILITY_CONFIRM_FRAMES) {
           orbitStable = true;
