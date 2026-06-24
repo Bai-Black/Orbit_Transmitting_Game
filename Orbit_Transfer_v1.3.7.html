@@ -440,6 +440,27 @@ function drawHUD() {
   ctx.font = '10px monospace';
   ctx.fillText('ESC/空格 暂停', 12, 90);
 
+  if (gameState === 'PLAYING' && dominantBody === bodies[1] && orbitData && orbitData.analysis) {
+    const a = orbitData.analysis;
+    ctx.fillStyle = '#0f0';
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'left';
+    let dy = 110;
+    ctx.fillText('[DEBUG]', 12, dy); dy += 14;
+    ctx.fillText('closed: ' + a.closed, 12, dy); dy += 14;
+    ctx.fillText('periAlt: ' + a.periAlt.toFixed(1), 12, dy); dy += 14;
+    ctx.fillText('apoAlt: ' + a.apoAlt.toFixed(1), 12, dy); dy += 14;
+    ctx.fillText('lastPeri: ' + lastPeriAlt.toFixed(1), 12, dy); dy += 14;
+    ctx.fillText('lastApo: ' + lastApoAlt.toFixed(1), 12, dy); dy += 14;
+    const periDiff = Math.abs(a.periAlt - lastPeriAlt);
+    const apoDiff = Math.abs(a.apoAlt - lastApoAlt);
+    ctx.fillText('periDiff: ' + periDiff.toFixed(1) + (periDiff < 10 ? ' OK' : ' FAIL'), 12, dy); dy += 14;
+    ctx.fillText('apoDiff: ' + apoDiff.toFixed(1) + (apoDiff < 10 ? ' OK' : ' FAIL'), 12, dy); dy += 14;
+    ctx.fillText('confirm: ' + stabilityConfirmCount + '/' + STABILITY_CONFIRM_FRAMES, 12, dy); dy += 14;
+    ctx.fillText('stable: ' + orbitStable, 12, dy); dy += 14;
+    ctx.fillText('throttle: ' + ship.throttle.toFixed(3), 12, dy);
+  }
+
   ctx.textAlign = 'right';
   ctx.fillStyle = '#666';
   ctx.font = '10px monospace';
