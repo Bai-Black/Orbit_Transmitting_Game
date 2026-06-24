@@ -251,10 +251,10 @@ function update(dt) {
     const analysis = analyzeOrbit(points, bodies[1]);
     orbitData = { points, analysis };
 
-    if (analysis && analysis.closed && ship.throttle < 0.01) {
+    if (ship.throttle < 0.01 && analysis && points.length > 20) {
       let minPosDist = Infinity;
       let closestIdx = -1;
-      for (let i = 10; i < points.length; i++) {
+      for (let i = 5; i < points.length; i++) {
         const dx = points[i].x - ship.x;
         const dy = points[i].y - ship.y;
         const d = Math.sqrt(dx * dx + dy * dy);
@@ -263,7 +263,8 @@ function update(dt) {
 
       if (closestIdx > 0) {
         const orbitalSpeed = Math.sqrt(G * bodies[1].mass / dist2);
-        const posThreshold = dist2 * STABILITY_POS_THRESHOLD;
+        const avgR = (analysis.periAlt + analysis.apoAlt) / 2 + bodies[1].radius;
+        const posThreshold = avgR * STABILITY_POS_THRESHOLD;
         const velThreshold = orbitalSpeed * STABILITY_VEL_THRESHOLD;
 
         const posOk = minPosDist < posThreshold;
@@ -289,9 +290,6 @@ function update(dt) {
       }
     } else if (ship.throttle >= 0.01) {
       stabilityConfirmCount = Math.max(0, stabilityConfirmCount - 1);
-    } else {
-      stabilityConfirmCount = 0;
-      orbitStable = false;
     }
 
     if (analysis && analysis.closed && analysis.periAlt > TARGET_ORBIT_MIN && analysis.apoAlt < TARGET_ORBIT_MAX && orbitStable) {
