@@ -681,7 +681,7 @@ function drawOrbitPrediction() {
   ctx.stroke();
   ctx.setLineDash([]);
 
-  if (!orbitData.analysis || !orbitData.analysis.closed) return;
+  if (!orbitData.analysis || !orbitData.analysis.closed || !orbitStable) return;
 
   const a = orbitData.analysis;
 
