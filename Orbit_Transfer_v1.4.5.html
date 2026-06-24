@@ -141,7 +141,6 @@ function analyzeOrbit(body) {
   const dx = ship.x - body.x;
   const dy = ship.y - body.y;
   const dist = Math.sqrt(dx * dx + dy * dy);
-  const speed = Math.sqrt(ship.vx * ship.vx + ship.vy * ship.vy);
   const avgR = dist;
   const GM = G * body.mass;
   const period = 2 * Math.PI * Math.sqrt(avgR * avgR * avgR / GM);
@@ -150,6 +149,7 @@ function analyzeOrbit(body) {
   let px = ship.x, py = ship.y;
   let pvx = ship.vx, pvy = ship.vy;
   let minDist = dist, maxDist = dist;
+  let periPt = { x: px, y: py }, apoPt = { x: px, y: py };
   for (let i = 0; i < steps; i++) {
     const g = gravity(px, py, body.x, body.y, body.mass);
     pvx += g.x * FIXED_DT;
@@ -157,8 +157,8 @@ function analyzeOrbit(body) {
     px += pvx * FIXED_DT;
     py += pvy * FIXED_DT;
     const d = Math.sqrt((px - body.x) ** 2 + (py - body.y) ** 2);
-    if (d < minDist) minDist = d;
-    if (d > maxDist) maxDist = d;
+    if (d < minDist) { minDist = d; periPt = { x: px, y: py }; }
+    if (d > maxDist) { maxDist = d; apoPt = { x: px, y: py }; }
     const dd = Math.sqrt((px - ship.x) ** 2 + (py - ship.y) ** 2);
     if (i > steps * 0.5 && dd < avgR * 0.1) {
       return {
@@ -166,8 +166,8 @@ function analyzeOrbit(body) {
         periAlt: minDist - body.radius,
         apoAlt: maxDist - body.radius,
         avgAlt: (minDist + maxDist) / 2 - body.radius,
-        periPoint: { x: ship.x, y: ship.y },
-        apoPoint: { x: ship.x, y: ship.y }
+        periPoint: periPt,
+        apoPoint: apoPt
       };
     }
   }
@@ -177,8 +177,8 @@ function analyzeOrbit(body) {
     periAlt: minDist - body.radius,
     apoAlt: maxDist - body.radius,
     avgAlt: (minDist + maxDist) / 2 - body.radius,
-    periPoint: { x: ship.x, y: ship.y },
-    apoPoint: { x: ship.x, y: ship.y }
+    periPoint: periPt,
+    apoPoint: apoPt
   };
 }
 
