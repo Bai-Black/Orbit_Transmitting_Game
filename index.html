@@ -27,7 +27,7 @@ const G = 500;
 const THRUST_MAX = 200;
 const ROT_SPEED = 2.5;
 const TRAIL_LEN = 300;
-const DT = 1 / 60;
+const FIXED_DT = 1 / 60;
 
 const bodies = [
   { x: 300, y: 400, mass: 5000, radius: 35, label: '天体 A' },
@@ -41,6 +41,8 @@ let gameState = 'TITLE';
 let winTimer = 0;
 let keys = {};
 let pauseBtnRects = [];
+let lastTime = 0;
+let accumulator = 0;
 
 const ORBIT_R_OFFSET = 120;
 const WIN_DIST_MIN = 80;
@@ -75,6 +77,8 @@ function initShip() {
 function resetGame() {
   initShip();
   gameState = 'PLAYING';
+  lastTime = 0;
+  accumulator = 0;
 }
 
 function gravity(ax, ay, bx, by, mass) {
@@ -87,18 +91,18 @@ function gravity(ax, ay, bx, by, mass) {
   return { x: force * dx / dist, y: force * dy / dist };
 }
 
-function update() {
+function update(dt) {
   if (gameState !== 'PLAYING') return;
 
-  if (keys['ArrowLeft']) ship.angle -= ROT_SPEED * DT;
-  if (keys['ArrowRight']) ship.angle += ROT_SPEED * DT;
+  if (keys['ArrowLeft']) ship.angle -= ROT_SPEED * dt;
+  if (keys['ArrowRight']) ship.angle += ROT_SPEED * dt;
 
   if (keys['ArrowUp']) {
-    ship.throttle = Math.min(1, ship.throttle + 1.5 * DT);
+    ship.throttle = Math.min(1, ship.throttle + 1.5 * dt);
   } else if (keys['ArrowDown']) {
-    ship.throttle = Math.max(0, ship.throttle - 1.5 * DT);
+    ship.throttle = Math.max(0, ship.throttle - 1.5 * dt);
   } else {
-    ship.throttle = Math.max(0, ship.throttle - 0.3 * DT);
+    ship.throttle = Math.max(0, ship.throttle - 0.3 * dt);
   }
 
   let ax = 0, ay = 0;
@@ -113,10 +117,10 @@ function update() {
     ay += THRUST_MAX * ship.throttle * Math.sin(ship.angle);
   }
 
-  ship.vx += ax * DT;
-  ship.vy += ay * DT;
-  ship.x += ship.vx * DT;
-  ship.y += ship.vy * DT;
+  ship.vx += ax * dt;
+  ship.vy += ay * dt;
+  ship.x += ship.vx * dt;
+  ship.y += ship.vy * dt;
 
   trail.push({ x: ship.x, y: ship.y });
   if (trail.length > TRAIL_LEN) trail.shift();
@@ -140,13 +144,13 @@ function update() {
 
   if (orbitR > WIN_DIST_MIN && orbitR < WIN_DIST_MAX &&
       speed > orbitalSpeed * 0.7 && speed < orbitalSpeed * 1.3) {
-    winTimer += DT;
+    winTimer += dt;
     if (winTimer >= 2) {
       gameState = 'WIN';
       return;
     }
   } else {
-    winTimer = Math.max(0, winTimer - DT * 2);
+    winTimer = Math.max(0, winTimer - dt * 2);
   }
 
   let tooFar = true;
@@ -478,8 +482,19 @@ function render() {
   if (gameState === 'PAUSED') drawPause();
 }
 
-function gameLoop() {
-  update();
+function gameLoop(timestamp) {
+  if (lastTime === 0) lastTime = timestamp;
+  let delta = (timestamp - lastTime) / 1000;
+  lastTime = timestamp;
+
+  if (delta > 0.1) delta = 0.1;
+
+  accumulator += delta;
+  while (accumulator >= FIXED_DT) {
+    update(FIXED_DT);
+    accumulator -= FIXED_DT;
+  }
+
   render();
   requestAnimationFrame(gameLoop);
 }
