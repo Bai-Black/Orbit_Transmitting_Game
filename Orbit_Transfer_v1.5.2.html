@@ -842,7 +842,7 @@ function gameLoop(timestamp) {
 
 window.addEventListener('keydown', function(e) {
   keys[e.code] = true;
-  if (e.code === 'KeyD') {
+  if (e.key === 'd' || e.key === 'D') {
     debugMode = !debugMode;
   }
   if (e.code === 'Space' || e.code === 'Escape') {
