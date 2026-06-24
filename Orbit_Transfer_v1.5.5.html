@@ -69,6 +69,8 @@ let lastApoAltA = -1;
 let debugMode = false;
 let dominantBody = bodies[0];
 let prevDominantBody = bodies[0];
+let starCanvas = null;
+let frameCount = 0;
 
 function generateStars() {
   stars = [];
@@ -78,6 +80,15 @@ function generateStars() {
       y: Math.random() * 2000 - 200,
       brightness: Math.random() * 0.5 + 0.3
     });
+  }
+  starCanvas = document.createElement('canvas');
+  starCanvas.width = 3000;
+  starCanvas.height = 2000;
+  const sctx = starCanvas.getContext('2d');
+  for (const s of stars) {
+    const c = Math.floor(s.brightness * 255);
+    sctx.fillStyle = `rgb(${c},${c},${c})`;
+    sctx.fillRect(Math.floor(s.x + 500), Math.floor(s.y + 200), 1, 1);
   }
 }
 
@@ -154,7 +165,7 @@ function analyzeOrbit(body) {
   const GM = G * body.mass;
   const a = 1 / (2 / dist - speed * speed / GM);
   const period = 2 * Math.PI * Math.sqrt(Math.abs(a) * Math.abs(a) * Math.abs(a) / GM);
-  const steps = Math.ceil(period / FIXED_DT);
+  const steps = Math.min(Math.ceil(period / FIXED_DT), 3000);
 
   let px = ship.x, py = ship.y;
   let pvx = ship.vx, pvy = ship.vy;
@@ -256,8 +267,8 @@ function update(dt) {
   for (const b of bodies) {
     const dx = ship.x - b.x;
     const dy = ship.y - b.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist < b.radius) {
+    const distSq = dx * dx + dy * dy;
+    if (distSq < b.radius * b.radius) {
       gameState = 'CRASH';
       return;
     }
@@ -269,7 +280,7 @@ function update(dt) {
   const orbitR = dist2 - bodies[1].radius;
 
   if (dominantBody === bodies[1] && orbitR > ORBIT_MIN && orbitR < ORBIT_MAX) {
-    if (!orbitStable) {
+    if (!orbitStable && frameCount % 3 === 0) {
       const points = predictOrbit(bodies[1]);
       const analysis = analyzeOrbit(bodies[1]);
       orbitData = { points, analysis };
@@ -365,7 +376,7 @@ function update(dt) {
   for (const b of bodies) {
     const ddx = ship.x - b.x;
     const ddy = ship.y - b.y;
-    if (Math.sqrt(ddx * ddx + ddy * ddy) < ESCAPE_DIST) {
+    if (ddx * ddx + ddy * ddy < ESCAPE_DIST * ESCAPE_DIST) {
       tooFar = false;
       break;
     }
@@ -381,14 +392,9 @@ function drawBackground() {
 }
 
 function drawStars() {
-  for (const s of stars) {
-    const sx = s.x - camX + canvas.width / 2;
-    const sy = s.y - camY + canvas.height / 2;
-    if (sx < -10 || sx > canvas.width + 10 || sy < -10 || sy > canvas.height + 10) continue;
-    const c = Math.floor(s.brightness * 255);
-    ctx.fillStyle = `rgb(${c},${c},${c})`;
-    ctx.fillRect(Math.floor(sx), Math.floor(sy), 1, 1);
-  }
+  const sx = -500 - camX + canvas.width / 2;
+  const sy = -200 - camY + canvas.height / 2;
+  ctx.drawImage(starCanvas, sx, sy);
 }
 
 function drawBody(b) {
@@ -429,11 +435,11 @@ function drawTrail() {
   }
   ctx.stroke();
 
-  for (let i = 0; i < trail.length; i += 4) {
+  for (let i = 0; i < trail.length; i += 6) {
     const alpha = (i / trail.length) * 0.5;
     const sx = trail[i].x - camX + canvas.width / 2;
     const sy = trail[i].y - camY + canvas.height / 2;
-    ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+    ctx.fillStyle = 'rgba(255,255,255,' + alpha.toFixed(2) + ')';
     ctx.fillRect(Math.floor(sx), Math.floor(sy), 1, 1);
   }
 }
@@ -836,6 +842,7 @@ function gameLoop(timestamp) {
     accumulator -= FIXED_DT;
   }
 
+  frameCount++;
   render();
   requestAnimationFrame(gameLoop);
 }
