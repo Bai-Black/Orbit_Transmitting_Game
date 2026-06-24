@@ -62,6 +62,10 @@ let orbitStable = false;
 let stabilityConfirmCount = 0;
 let lastPeriAlt = -1;
 let lastApoAlt = -1;
+let orbitStableA = false;
+let stabilityConfirmCountA = 0;
+let lastPeriAltA = -1;
+let lastApoAltA = -1;
 let dominantBody = bodies[0];
 let prevDominantBody = bodies[0];
 
@@ -96,6 +100,10 @@ function initShip() {
   stabilityConfirmCount = 0;
   lastPeriAlt = -1;
   lastApoAlt = -1;
+  orbitStableA = false;
+  stabilityConfirmCountA = 0;
+  lastPeriAltA = -1;
+  lastApoAltA = -1;
   dominantBody = bodies[0];
   prevDominantBody = bodies[0];
 }
@@ -315,6 +323,41 @@ function update(dt) {
     orbitData = null;
     orbitReady = false;
     orbitAngleTotal = 0;
+
+    if (dominantBody === bodies[0]) {
+      const dxA = ship.x - bodies[0].x;
+      const dyA = ship.y - bodies[0].y;
+      const distA = Math.sqrt(dxA * dxA + dyA * dyA);
+      const orbitRA = distA - bodies[0].radius;
+
+      if (ship.throttle < 0.01 && orbitRA > ORBIT_MIN && orbitRA < ORBIT_MAX) {
+        const analysisA = analyzeOrbit(bodies[0]);
+        const periOkA = lastPeriAltA < 0 || Math.abs(analysisA.periAlt - lastPeriAltA) < 15;
+        const apoOkA = lastApoAltA < 0 || Math.abs(analysisA.apoAlt - lastApoAltA) < 15;
+        lastPeriAltA = analysisA.periAlt;
+        lastApoAltA = analysisA.apoAlt;
+
+        if (periOkA && apoOkA && analysisA.closed) {
+          stabilityConfirmCountA++;
+          if (stabilityConfirmCountA >= STABILITY_CONFIRM_FRAMES) {
+            orbitStableA = true;
+          }
+        } else {
+          stabilityConfirmCountA = Math.max(0, stabilityConfirmCountA - 1);
+          if (stabilityConfirmCountA === 0) orbitStableA = false;
+        }
+      } else if (ship.throttle >= 0.01) {
+        orbitStableA = false;
+        stabilityConfirmCountA = 0;
+        lastPeriAltA = -1;
+        lastApoAltA = -1;
+      }
+    } else {
+      orbitStableA = false;
+      stabilityConfirmCountA = 0;
+      lastPeriAltA = -1;
+      lastApoAltA = -1;
+    }
   }
 
   let tooFar = true;
@@ -512,7 +555,11 @@ function drawHUD() {
       const dy0 = ship.y - bodies[0].y;
       const dist0 = Math.sqrt(dx0 * dx0 + dy0 * dy0) - bodies[0].radius;
       if (dist0 > ORBIT_MIN && dist0 < ORBIT_MAX) {
-        ctx.fillText('天体A轨道 · 稳定', cx, bottom);
+        if (orbitStableA) {
+          ctx.fillText('天体A轨道 · 稳定', cx, bottom);
+        } else {
+          ctx.fillText('天体A轨道 · 未稳定', cx, bottom);
+        }
       } else {
         ctx.fillText('天体A区域 · 无轨道', cx, bottom);
       }
