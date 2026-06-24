@@ -262,10 +262,8 @@ function update(dt) {
       }
 
       if (closestIdx > 0) {
-        const orbitalSpeed = Math.sqrt(G * bodies[1].mass / dist2);
         const avgR = (analysis.periAlt + analysis.apoAlt) / 2 + bodies[1].radius;
         const posThreshold = avgR * STABILITY_POS_THRESHOLD;
-        const velThreshold = orbitalSpeed * STABILITY_VEL_THRESHOLD;
 
         const posOk = minPosDist < posThreshold;
 
@@ -273,12 +271,17 @@ function update(dt) {
         const cn = points[Math.min(closestIdx + 1, points.length - 1)];
         const cvx = (cn.x - cp.x) / FIXED_DT;
         const cvy = (cn.y - cp.y) / FIXED_DT;
-        const dvx = cvx - ship.vx;
-        const dvy = cvy - ship.vy;
-        const velDiff = Math.sqrt(dvx * dvx + dvy * dvy);
-        const velOk = velDiff < velThreshold;
+        const rNow = dist2;
+        const rPred = Math.sqrt((cp.x - bodies[1].x) ** 2 + (cp.y - bodies[1].y) ** 2);
+        const vNow2 = ship.vx * ship.vx + ship.vy * ship.vy;
+        const vPred2 = cvx * cvx + cvy * cvy;
+        const eNow = vNow2 / 2 - G * bodies[1].mass / rNow;
+        const ePred = vPred2 / 2 - G * bodies[1].mass / rPred;
+        const eDiff = Math.abs(eNow - ePred);
+        const eThreshold = G * bodies[1].mass / avgR * 0.05;
+        const energyOk = eDiff < eThreshold;
 
-        if (posOk && velOk) {
+        if (posOk && energyOk) {
           stabilityConfirmCount++;
           if (stabilityConfirmCount >= STABILITY_CONFIRM_FRAMES) {
             orbitStable = true;
