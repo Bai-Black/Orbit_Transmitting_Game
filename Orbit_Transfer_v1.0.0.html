@@ -53,6 +53,8 @@ let orbitReady = false;
 let orbitAngleStart = 0;
 let orbitAngleTotal = 0;
 let orbitWinQueued = false;
+let orbitStabilityHistory = [];
+let orbitStable = false;
 
 function generateStars() {
   stars = [];
@@ -81,6 +83,8 @@ function initShip() {
   orbitAngleStart = 0;
   orbitAngleTotal = 0;
   orbitWinQueued = false;
+  orbitStabilityHistory = [];
+  orbitStable = false;
 }
 
 function resetGame() {
@@ -220,7 +224,32 @@ function update(dt) {
     const analysis = analyzeOrbit(points, bodies[1]);
     orbitData = { points, analysis };
 
-    if (analysis && analysis.closed && analysis.periAlt > ORBIT_MIN && analysis.apoAlt < ORBIT_MAX) {
+    if (analysis && analysis.closed) {
+      orbitStabilityHistory.push({ peri: analysis.periAlt, apo: analysis.apoAlt });
+      if (orbitStabilityHistory.length > 30) orbitStabilityHistory.shift();
+
+      if (orbitStabilityHistory.length >= 15) {
+        let periSum = 0, apoSum = 0;
+        for (const h of orbitStabilityHistory) { periSum += h.peri; apoSum += h.apo; }
+        const periAvg = periSum / orbitStabilityHistory.length;
+        const apoAvg = apoSum / orbitStabilityHistory.length;
+        let periVar = 0, apoVar = 0;
+        for (const h of orbitStabilityHistory) {
+          periVar += (h.peri - periAvg) ** 2;
+          apoVar += (h.apo - apoAvg) ** 2;
+        }
+        periVar = Math.sqrt(periVar / orbitStabilityHistory.length);
+        apoVar = Math.sqrt(apoVar / orbitStabilityHistory.length);
+        orbitStable = periVar < 15 && apoVar < 15;
+      } else {
+        orbitStable = false;
+      }
+    } else {
+      orbitStabilityHistory = [];
+      orbitStable = false;
+    }
+
+    if (analysis && analysis.closed && analysis.periAlt > ORBIT_MIN && analysis.apoAlt < ORBIT_MAX && orbitStable) {
       if (!orbitReady) {
         orbitReady = true;
         orbitAngleStart = Math.atan2(ship.y - bodies[1].y, ship.x - bodies[1].x);
@@ -392,23 +421,40 @@ function drawHUD() {
   ctx.fillText('空格/ESC 暂停', rx, canvas.height - 24);
   ctx.textAlign = 'left';
 
-  if (gameState === 'PLAYING' && orbitData && orbitData.analysis) {
-    const a = orbitData.analysis;
+  if (gameState === 'PLAYING') {
     ctx.fillStyle = '#fff';
     ctx.font = '12px monospace';
     ctx.textAlign = 'center';
     const cx = canvas.width / 2;
-    if (a.closed && a.periAlt > ORBIT_MIN && a.apoAlt < ORBIT_MAX) {
-      if (orbitReady) {
-        const pct = Math.min(100, Math.abs(orbitAngleTotal) / (Math.PI * 2) * 100);
-        ctx.fillText('入轨成功  计圈中 ' + pct.toFixed(0) + '%', cx, canvas.height - 30);
+    const bottom = canvas.height - 12;
+
+    if (dominantBody === bodies[1] && orbitData && orbitData.analysis) {
+      const a = orbitData.analysis;
+      if (a.closed && a.periAlt > ORBIT_MIN && a.apoAlt < ORBIT_MAX && orbitStable) {
+        if (orbitReady) {
+          const pct = Math.min(100, Math.abs(orbitAngleTotal) / (Math.PI * 2) * 100);
+          ctx.fillText('天体B轨道 · 稳定 · 计圈中 ' + pct.toFixed(0) + '%', cx, bottom);
+        } else {
+          ctx.fillText('天体B轨道 · 稳定 · 准备入轨', cx, bottom);
+        }
+      } else if (a.closed && orbitStable) {
+        ctx.fillText('天体B轨道 · 稳定 · 高度不符', cx, bottom);
+      } else if (a.closed) {
+        ctx.fillText('天体B轨道 · 未稳定 · 轨道漂移中', cx, bottom);
       } else {
-        ctx.fillText('轨道闭合  等待稳定', cx, canvas.height - 30);
+        ctx.fillText('天体B区域 · 轨道预测中...', cx, bottom);
       }
-    } else if (a.closed) {
-      ctx.fillText('轨道闭合  高度不符', cx, canvas.height - 30);
+    } else if (dominantBody === bodies[0]) {
+      const dx0 = ship.x - bodies[0].x;
+      const dy0 = ship.y - bodies[0].y;
+      const dist0 = Math.sqrt(dx0 * dx0 + dy0 * dy0) - bodies[0].radius;
+      if (dist0 > ORBIT_MIN && dist0 < ORBIT_MAX) {
+        ctx.fillText('天体A轨道 · 稳定', cx, bottom);
+      } else {
+        ctx.fillText('天体A区域 · 无轨道', cx, bottom);
+      }
     } else {
-      ctx.fillText('轨道预测中...', cx, canvas.height - 30);
+      ctx.fillText('无轨道', cx, bottom);
     }
   }
 }
