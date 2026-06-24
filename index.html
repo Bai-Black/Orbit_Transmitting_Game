@@ -38,16 +38,21 @@ const ship = { x: 0, y: 0, vx: 0, vy: 0, angle: 0, throttle: 0 };
 let trail = [];
 let stars = [];
 let gameState = 'TITLE';
-let winTimer = 0;
 let keys = {};
 let pauseBtnRects = [];
 let lastTime = 0;
 let accumulator = 0;
 
 const ORBIT_R_OFFSET = 120;
-const WIN_DIST_MIN = 80;
-const WIN_DIST_MAX = 250;
+const ORBIT_MIN = 60;
+const ORBIT_MAX = 300;
 const ESCAPE_DIST = 3000;
+
+let orbitData = null;
+let orbitReady = false;
+let orbitAngleStart = 0;
+let orbitAngleTotal = 0;
+let orbitWinQueued = false;
 
 function generateStars() {
   stars = [];
@@ -71,7 +76,11 @@ function initShip() {
   ship.angle = -Math.PI / 2;
   ship.throttle = 0;
   trail = [];
-  winTimer = 0;
+  orbitData = null;
+  orbitReady = false;
+  orbitAngleStart = 0;
+  orbitAngleTotal = 0;
+  orbitWinQueued = false;
 }
 
 function resetGame() {
@@ -89,6 +98,63 @@ function gravity(ax, ay, bx, by, mass) {
   if (dist < 1) return { x: 0, y: 0 };
   const force = G * mass / distSq;
   return { x: force * dx / dist, y: force * dy / dist };
+}
+
+function predictOrbit(body) {
+  const points = [];
+  let px = ship.x, py = ship.y;
+  let pvx = ship.vx, pvy = ship.vy;
+  const steps = 600;
+  const dt = FIXED_DT;
+  for (let i = 0; i < steps; i++) {
+    points.push({ x: px, y: py });
+    const g = gravity(px, py, body.x, body.y, body.mass);
+    pvx += g.x * dt;
+    pvy += g.y * dt;
+    px += pvx * dt;
+    py += pvy * dt;
+    const dx = px - body.x;
+    const dy = py - body.y;
+    if (Math.sqrt(dx * dx + dy * dy) < body.radius) break;
+  }
+  return points;
+}
+
+function analyzeOrbit(points, body) {
+  if (points.length < 20) return null;
+
+  let minDist = Infinity, maxDist = 0;
+  let periIdx = 0, apoIdx = 0;
+  for (let i = 0; i < points.length; i++) {
+    const dx = points[i].x - body.x;
+    const dy = points[i].y - body.y;
+    const d = Math.sqrt(dx * dx + dy * dy);
+    if (d < minDist) { minDist = d; periIdx = i; }
+    if (d > maxDist) { maxDist = d; apoIdx = i; }
+  }
+
+  const first = points[0];
+  const last = points[points.length - 1];
+  const closeDx = last.x - first.x;
+  const closeDy = last.y - first.y;
+  const closeDist = Math.sqrt(closeDx * closeDx + closeDy * closeDy);
+  const avgR = (minDist + maxDist) / 2;
+  const closed = closeDist < avgR * 0.2;
+
+  const periAlt = minDist - body.radius;
+  const apoAlt = maxDist - body.radius;
+  const diff = apoAlt - periAlt;
+  const isCircular = diff < avgR * 0.1;
+
+  return {
+    closed,
+    periAlt,
+    apoAlt,
+    periPoint: points[periIdx],
+    apoPoint: points[apoIdx],
+    isCircular,
+    avgAlt: (periAlt + apoAlt) / 2
+  };
 }
 
 function update(dt) {
@@ -148,18 +214,37 @@ function update(dt) {
   const dy2 = ship.y - bodies[1].y;
   const dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
   const orbitR = dist2 - bodies[1].radius;
-  const speed = Math.sqrt(ship.vx * ship.vx + ship.vy * ship.vy);
-  const orbitalSpeed = Math.sqrt(G * bodies[1].mass / dist2);
 
-  if (orbitR > WIN_DIST_MIN && orbitR < WIN_DIST_MAX &&
-      speed > orbitalSpeed * 0.7 && speed < orbitalSpeed * 1.3) {
-    winTimer += dt;
-    if (winTimer >= 2) {
-      gameState = 'WIN';
-      return;
+  if (dominantBody === bodies[1] && orbitR > ORBIT_MIN && orbitR < ORBIT_MAX) {
+    const points = predictOrbit(bodies[1]);
+    const analysis = analyzeOrbit(points, bodies[1]);
+    orbitData = { points, analysis };
+
+    if (analysis && analysis.closed && analysis.periAlt > ORBIT_MIN && analysis.apoAlt < ORBIT_MAX) {
+      if (!orbitReady) {
+        orbitReady = true;
+        orbitAngleStart = Math.atan2(ship.y - bodies[1].y, ship.x - bodies[1].x);
+        orbitAngleTotal = 0;
+      } else {
+        const curAngle = Math.atan2(ship.y - bodies[1].y, ship.x - bodies[1].x);
+        let dAngle = curAngle - orbitAngleStart;
+        if (dAngle > Math.PI) dAngle -= Math.PI * 2;
+        if (dAngle < -Math.PI) dAngle += Math.PI * 2;
+        orbitAngleTotal += dAngle;
+        orbitAngleStart = curAngle;
+        if (Math.abs(orbitAngleTotal) >= Math.PI * 2) {
+          gameState = 'WIN';
+          return;
+        }
+      }
+    } else {
+      orbitReady = false;
+      orbitAngleTotal = 0;
     }
   } else {
-    winTimer = Math.max(0, winTimer - dt * 2);
+    orbitData = null;
+    orbitReady = false;
+    orbitAngleTotal = 0;
   }
 
   let tooFar = true;
@@ -271,19 +356,6 @@ function drawShip() {
   }
 
   ctx.restore();
-
-  if (winTimer > 0) {
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 1;
-    ctx.setLineDash([4, 4]);
-    ctx.beginPath();
-    const tx = bodies[1].x - camX + canvas.width / 2;
-    const ty = bodies[1].y - camY + canvas.height / 2;
-    const d = Math.sqrt((ship.x - bodies[1].x) ** 2 + (ship.y - bodies[1].y) ** 2);
-    ctx.arc(tx, ty, d, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.setLineDash([]);
-  }
 }
 
 function drawHUD() {
@@ -320,11 +392,24 @@ function drawHUD() {
   ctx.fillText('空格/ESC 暂停', rx, canvas.height - 24);
   ctx.textAlign = 'left';
 
-  if (gameState === 'PLAYING' && winTimer > 0) {
+  if (gameState === 'PLAYING' && orbitData && orbitData.analysis) {
+    const a = orbitData.analysis;
     ctx.fillStyle = '#fff';
-    ctx.font = '14px monospace';
+    ctx.font = '12px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('轨道匹配: ' + (winTimer / 2 * 100).toFixed(0) + '%', canvas.width / 2, canvas.height - 30);
+    const cx = canvas.width / 2;
+    if (a.closed && a.periAlt > ORBIT_MIN && a.apoAlt < ORBIT_MAX) {
+      if (orbitReady) {
+        const pct = Math.min(100, Math.abs(orbitAngleTotal) / (Math.PI * 2) * 100);
+        ctx.fillText('入轨成功  计圈中 ' + pct.toFixed(0) + '%', cx, canvas.height - 30);
+      } else {
+        ctx.fillText('轨道闭合  等待稳定', cx, canvas.height - 30);
+      }
+    } else if (a.closed) {
+      ctx.fillText('轨道闭合  高度不符', cx, canvas.height - 30);
+    } else {
+      ctx.fillText('轨道预测中...', cx, canvas.height - 30);
+    }
   }
 }
 
@@ -469,6 +554,79 @@ function drawOffscreenIndicator() {
   ctx.fillText(Math.floor(dist), edgeX, edgeY + 18);
 }
 
+function drawOrbitPrediction() {
+  if (!orbitData) return;
+
+  const body = bodies[1];
+  const sx = body.x - camX + canvas.width / 2;
+  const sy = body.y - camY + canvas.height / 2;
+
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([6, 4]);
+  ctx.beginPath();
+  for (let i = 0; i < orbitData.points.length; i++) {
+    const px = orbitData.points[i].x - camX + canvas.width / 2;
+    const py = orbitData.points[i].y - camY + canvas.height / 2;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  if (!orbitData.analysis || !orbitData.analysis.closed) return;
+
+  const a = orbitData.analysis;
+
+  if (a.isCircular) {
+    const r = a.avgAlt + body.radius;
+    ctx.strokeStyle = '#666';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(sx, sy, r, 0, Math.PI * 2);
+    ctx.stroke();
+
+    const labelX = sx + r + 6;
+    const labelY = sy;
+    ctx.fillStyle = '#aaa';
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('h=' + a.avgAlt.toFixed(0), labelX, labelY + 4);
+  } else {
+    const periR = a.periAlt + body.radius;
+    const apoR = a.apoAlt + body.radius;
+
+    ctx.strokeStyle = '#444';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(sx, sy, periR, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(sx, sy, apoR, 0, Math.PI * 2);
+    ctx.stroke();
+
+    const periSx = a.periPoint.x - camX + canvas.width / 2;
+    const periSy = a.periPoint.y - camY + canvas.height / 2;
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(periSx, periSy, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#aaa';
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('近 ' + a.periAlt.toFixed(0), periSx, periSy - 8);
+
+    const apoSx = a.apoPoint.x - camX + canvas.width / 2;
+    const apoSy = a.apoPoint.y - camY + canvas.height / 2;
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(apoSx, apoSy, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#aaa';
+    ctx.fillText('远 ' + a.apoAlt.toFixed(0), apoSx, apoSy - 8);
+  }
+}
+
 function render() {
   if (gameState === 'TITLE') {
     drawTitle();
@@ -482,6 +640,7 @@ function render() {
   drawStars();
   drawTrail();
   for (const b of bodies) drawBody(b);
+  drawOrbitPrediction();
   drawShip();
   drawHUD();
   drawOffscreenIndicator();
