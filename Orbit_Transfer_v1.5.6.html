@@ -280,7 +280,7 @@ function update(dt) {
   const orbitR = dist2 - bodies[1].radius;
 
   if (dominantBody === bodies[1] && orbitR > ORBIT_MIN && orbitR < ORBIT_MAX) {
-    if (!orbitStable && frameCount % 3 === 0) {
+    if (!orbitStable) {
       const points = predictOrbit(bodies[1]);
       const analysis = analyzeOrbit(bodies[1]);
       orbitData = { points, analysis };
