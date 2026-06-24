@@ -46,6 +46,8 @@ let accumulator = 0;
 const ORBIT_R_OFFSET = 120;
 const ORBIT_MIN = 60;
 const ORBIT_MAX = 300;
+const DETECT_MIN = 40;
+const DETECT_MAX = 500;
 const ESCAPE_DIST = 3000;
 
 let orbitData = null;
@@ -56,6 +58,7 @@ let orbitWinQueued = false;
 let orbitStabilityHistory = [];
 let orbitStable = false;
 let dominantBody = bodies[0];
+let prevDominantBody = bodies[0];
 
 function generateStars() {
   stars = [];
@@ -86,6 +89,8 @@ function initShip() {
   orbitWinQueued = false;
   orbitStabilityHistory = [];
   orbitStable = false;
+  dominantBody = bodies[0];
+  prevDominantBody = bodies[0];
 }
 
 function resetGame() {
@@ -178,16 +183,34 @@ function update(dt) {
 
   let ax = 0, ay = 0;
   let minDist = Infinity;
-  dominantBody = bodies[0];
+  let closestBody = bodies[0];
   for (const b of bodies) {
     const dx = ship.x - b.x;
     const dy = ship.y - b.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
     if (dist < minDist) {
       minDist = dist;
-      dominantBody = b;
+      closestBody = b;
     }
   }
+
+  if (closestBody !== prevDominantBody) {
+    const dxA = ship.x - bodies[0].x;
+    const dyA = ship.y - bodies[0].y;
+    const distA = Math.sqrt(dxA * dxA + dyA * dyA);
+    const dxB = ship.x - bodies[1].x;
+    const dyB = ship.y - bodies[1].y;
+    const distB = Math.sqrt(dxB * dxB + dyB * dyB);
+    const boundary = (distA + distB) / 2;
+    if (closestBody === bodies[0] && distA < boundary * 0.8) {
+      prevDominantBody = bodies[0];
+    } else if (closestBody === bodies[1] && distB < boundary * 0.8) {
+      prevDominantBody = bodies[1];
+    }
+  } else {
+    prevDominantBody = closestBody;
+  }
+  dominantBody = prevDominantBody;
   const g = gravity(ship.x, ship.y, dominantBody.x, dominantBody.y, dominantBody.mass);
   ax = g.x;
   ay = g.y;
@@ -220,7 +243,7 @@ function update(dt) {
   const dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
   const orbitR = dist2 - bodies[1].radius;
 
-  if (dominantBody === bodies[1] && orbitR > ORBIT_MIN && orbitR < ORBIT_MAX) {
+  if (dominantBody === bodies[1] && orbitR > DETECT_MIN && orbitR < DETECT_MAX) {
     const points = predictOrbit(bodies[1]);
     const analysis = analyzeOrbit(points, bodies[1]);
     orbitData = { points, analysis };
