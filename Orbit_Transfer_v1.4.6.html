@@ -259,9 +259,13 @@ function update(dt) {
   const orbitR = dist2 - bodies[1].radius;
 
   if (dominantBody === bodies[1] && orbitR > ORBIT_MIN && orbitR < ORBIT_MAX) {
-    const points = predictOrbit(bodies[1]);
-    const analysis = analyzeOrbit(bodies[1]);
-    orbitData = { points, analysis };
+    if (!orbitStable) {
+      const points = predictOrbit(bodies[1]);
+      const analysis = analyzeOrbit(bodies[1]);
+      orbitData = { points, analysis };
+    }
+
+    const analysis = orbitData ? orbitData.analysis : null;
 
     if (ship.throttle < 0.01 && analysis) {
       const periOk = lastPeriAlt < 0 || Math.abs(analysis.periAlt - lastPeriAlt) < 15;
