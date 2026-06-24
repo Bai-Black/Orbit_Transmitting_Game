@@ -106,11 +106,20 @@ function update(dt) {
   }
 
   let ax = 0, ay = 0;
+  let minDist = Infinity;
+  let dominantBody = bodies[0];
   for (const b of bodies) {
-    const g = gravity(ship.x, ship.y, b.x, b.y, b.mass);
-    ax += g.x;
-    ay += g.y;
+    const dx = ship.x - b.x;
+    const dy = ship.y - b.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < minDist) {
+      minDist = dist;
+      dominantBody = b;
+    }
   }
+  const g = gravity(ship.x, ship.y, dominantBody.x, dominantBody.y, dominantBody.mass);
+  ax = g.x;
+  ay = g.y;
 
   if (ship.throttle > 0.01) {
     ax += THRUST_MAX * ship.throttle * Math.cos(ship.angle);
