@@ -141,9 +141,10 @@ function analyzeOrbit(body) {
   const dx = ship.x - body.x;
   const dy = ship.y - body.y;
   const dist = Math.sqrt(dx * dx + dy * dy);
-  const avgR = dist;
+  const speed = Math.sqrt(ship.vx * ship.vx + ship.vy * ship.vy);
   const GM = G * body.mass;
-  const period = 2 * Math.PI * Math.sqrt(avgR * avgR * avgR / GM);
+  const a = 1 / (2 / dist - speed * speed / GM);
+  const period = 2 * Math.PI * Math.sqrt(Math.abs(a) * Math.abs(a) * Math.abs(a) / GM);
   const steps = Math.ceil(period / FIXED_DT);
 
   let px = ship.x, py = ship.y;
@@ -160,7 +161,7 @@ function analyzeOrbit(body) {
     if (d < minDist) { minDist = d; periPt = { x: px, y: py }; }
     if (d > maxDist) { maxDist = d; apoPt = { x: px, y: py }; }
     const dd = Math.sqrt((px - ship.x) ** 2 + (py - ship.y) ** 2);
-    if (i > steps * 0.5 && dd < avgR * 0.1) {
+    if (i > steps * 0.5 && dd < Math.abs(a) * 0.15) {
       return {
         closed: true,
         periAlt: minDist - body.radius,
