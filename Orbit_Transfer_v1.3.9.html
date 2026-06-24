@@ -121,7 +121,7 @@ function predictOrbit(body) {
   const points = [];
   let px = ship.x, py = ship.y;
   let pvx = ship.vx, pvy = ship.vy;
-  const steps = 1200;
+  const steps = 2400;
   const dt = FIXED_DT;
   for (let i = 0; i < steps; i++) {
     points.push({ x: px, y: py });
@@ -156,7 +156,7 @@ function analyzeOrbit(points, body) {
   const closeDy = last.y - first.y;
   const closeDist = Math.sqrt(closeDx * closeDx + closeDy * closeDy);
   const avgR = (minDist + maxDist) / 2;
-  const closed = closeDist < avgR * 0.3;
+  const closed = closeDist < avgR * 0.5;
 
   const periAlt = minDist - body.radius;
   const apoAlt = maxDist - body.radius;
