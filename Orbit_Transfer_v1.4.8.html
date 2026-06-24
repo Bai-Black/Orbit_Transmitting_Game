@@ -367,7 +367,7 @@ function drawBody(b) {
   ctx.stroke();
 
   ctx.fillStyle = '#888';
-  ctx.font = '10px monospace';
+  ctx.font = '15px monospace';
   ctx.textAlign = 'center';
   ctx.fillText(b.label, sx, sy + b.radius + 14);
 }
@@ -442,7 +442,7 @@ function drawHUD() {
   const bar = '[' + '='.repeat(filled) + ' '.repeat(barLen - filled) + ']';
 
   ctx.fillStyle = '#fff';
-  ctx.font = '12px monospace';
+  ctx.font = '18px monospace';
   ctx.textAlign = 'left';
   ctx.fillText('速度: ' + speed.toFixed(1), 12, 24);
   ctx.fillText('距 A: ' + dist1.toFixed(0), 12, 40);
@@ -451,13 +451,13 @@ function drawHUD() {
   ctx.fillText('目标范围: ' + TARGET_ORBIT_MIN + '~' + TARGET_ORBIT_MAX, 12, 88);
 
   ctx.fillStyle = '#555';
-  ctx.font = '10px monospace';
+  ctx.font = '15px monospace';
   ctx.fillText('ESC/空格 暂停', 12, 90);
 
   if (gameState === 'PLAYING' && dominantBody === bodies[1] && orbitData && orbitData.analysis) {
     const a = orbitData.analysis;
     ctx.fillStyle = '#0f0';
-    ctx.font = '10px monospace';
+    ctx.font = '15px monospace';
     ctx.textAlign = 'left';
     let dy = 110;
     ctx.fillText('[DEBUG]', 12, dy); dy += 14;
@@ -477,7 +477,7 @@ function drawHUD() {
 
   ctx.textAlign = 'right';
   ctx.fillStyle = '#666';
-  ctx.font = '10px monospace';
+  ctx.font = '15px monospace';
   const rx = canvas.width - 12;
   ctx.fillText('← →  旋转姿态', rx, canvas.height - 52);
   ctx.fillText('↑ ↓   控制油门', rx, canvas.height - 38);
@@ -486,12 +486,14 @@ function drawHUD() {
 
   if (gameState === 'PLAYING') {
     ctx.fillStyle = '#fff';
-    ctx.font = '12px monospace';
+    ctx.font = '18px monospace';
     ctx.textAlign = 'center';
     const cx = canvas.width / 2;
     const bottom = canvas.height - 12;
 
-    if (dominantBody === bodies[1] && orbitData && orbitData.analysis) {
+    if (ship.throttle >= 0.01) {
+      ctx.fillText('变轨中', cx, bottom);
+    } else if (dominantBody === bodies[1] && orbitData && orbitData.analysis) {
       const a = orbitData.analysis;
       if (a.periAlt > TARGET_ORBIT_MIN && a.apoAlt < TARGET_ORBIT_MAX && orbitStable) {
         if (orbitReady) {
@@ -525,11 +527,11 @@ function drawTitle() {
   drawStars();
 
   ctx.fillStyle = '#fff';
-  ctx.font = 'bold 48px monospace';
+  ctx.font = 'bold 72px monospace';
   ctx.textAlign = 'center';
   ctx.fillText('轨 道 转 移', canvas.width / 2, canvas.height / 2 - 80);
 
-  ctx.font = '16px monospace';
+  ctx.font = '24px monospace';
   ctx.fillText('ORBITAL TRANSFER', canvas.width / 2, canvas.height / 2 - 45);
 
   const cx = canvas.width / 2;
@@ -553,14 +555,14 @@ function drawTitle() {
   ctx.setLineDash([]);
 
   ctx.fillStyle = '#fff';
-  ctx.font = '12px monospace';
+  ctx.font = '18px monospace';
   ctx.textAlign = 'center';
   ctx.fillText('← →  旋转姿态', cx, cy + 80);
   ctx.fillText('↑ ↓   控制油门', cx, cy + 100);
   ctx.fillText('将飞行器变轨至另一天体', cx, cy + 130);
 
   ctx.fillStyle = '#888';
-  ctx.font = '14px monospace';
+  ctx.font = '21px monospace';
   const blink = Math.floor(Date.now() / 500) % 2;
   if (blink) ctx.fillText('[ 按空格键开始 ]', cx, cy + 170);
 }
@@ -570,11 +572,11 @@ function drawOverlay(title, subtitle) {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   ctx.fillStyle = '#fff';
-  ctx.font = 'bold 36px monospace';
+  ctx.font = 'bold 54px monospace';
   ctx.textAlign = 'center';
   ctx.fillText(title, canvas.width / 2, canvas.height / 2 - 20);
 
-  ctx.font = '14px monospace';
+  ctx.font = '21px monospace';
   ctx.fillStyle = '#888';
   ctx.fillText(subtitle, canvas.width / 2, canvas.height / 2 + 20);
 
@@ -599,7 +601,7 @@ function drawPause() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   ctx.fillStyle = '#fff';
-  ctx.font = 'bold 36px monospace';
+  ctx.font = 'bold 54px monospace';
   ctx.textAlign = 'center';
   ctx.fillText('暂 停', canvas.width / 2, canvas.height / 2 - 60);
 
@@ -612,7 +614,7 @@ function drawPause() {
   ctx.lineWidth = 2;
   ctx.strokeRect(cx - bw / 2, continueY, bw, bh);
   ctx.fillStyle = '#fff';
-  ctx.font = '16px monospace';
+  ctx.font = '24px monospace';
   ctx.fillText('继 续', cx, continueY + 27);
   pauseBtnRects.push({ x: cx - bw / 2, y: continueY, w: bw, h: bh, action: 'resume' });
 
@@ -655,7 +657,7 @@ function drawOffscreenIndicator() {
 
   const dist = Math.sqrt((target.x - ship.x) ** 2 + (target.y - ship.y) ** 2);
   ctx.fillStyle = '#888';
-  ctx.font = '10px monospace';
+  ctx.font = '15px monospace';
   ctx.textAlign = 'center';
   ctx.fillText('天体 B', edgeX, edgeY - 12);
   ctx.fillText(Math.floor(dist), edgeX, edgeY + 18);
@@ -678,7 +680,7 @@ function drawOrbitPrediction() {
   ctx.setLineDash([]);
 
   ctx.fillStyle = '#444';
-  ctx.font = '9px monospace';
+  ctx.font = '14px monospace';
   ctx.textAlign = 'left';
   ctx.fillText('目标轨道', sx + TARGET_ORBIT_MAX + body.radius + 4, sy);
 
@@ -712,7 +714,7 @@ function drawOrbitPrediction() {
     const labelX = sx + r + 6;
     const labelY = sy;
     ctx.fillStyle = '#aaa';
-    ctx.font = '10px monospace';
+    ctx.font = '15px monospace';
     ctx.textAlign = 'left';
     ctx.fillText('h=' + a.avgAlt.toFixed(0), labelX, labelY + 4);
   } else {
@@ -735,7 +737,7 @@ function drawOrbitPrediction() {
     ctx.arc(periSx, periSy, 3, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = '#aaa';
-    ctx.font = '10px monospace';
+    ctx.font = '15px monospace';
     ctx.textAlign = 'center';
     ctx.fillText('近 ' + a.periAlt.toFixed(0), periSx, periSy - 8);
 
