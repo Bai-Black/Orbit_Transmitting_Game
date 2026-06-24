@@ -435,6 +435,7 @@ function drawHUD() {
   ctx.fillText('距 A: ' + dist1.toFixed(0), 12, 40);
   ctx.fillText('距 B: ' + dist2.toFixed(0), 12, 56);
   ctx.fillText('油门: ' + bar + ' ' + (ship.throttle * 100).toFixed(0) + '%', 12, 72);
+  ctx.fillText('目标范围: ' + TARGET_ORBIT_MIN + '~' + TARGET_ORBIT_MAX, 12, 88);
 
   ctx.fillStyle = '#555';
   ctx.font = '10px monospace';
@@ -479,19 +480,17 @@ function drawHUD() {
 
     if (dominantBody === bodies[1] && orbitData && orbitData.analysis) {
       const a = orbitData.analysis;
-      if (a.closed && a.periAlt > TARGET_ORBIT_MIN && a.apoAlt < TARGET_ORBIT_MAX && orbitStable) {
+      if (a.periAlt > TARGET_ORBIT_MIN && a.apoAlt < TARGET_ORBIT_MAX && orbitStable) {
         if (orbitReady) {
           const pct = Math.min(100, Math.abs(orbitAngleTotal) / (Math.PI * 2) * 100);
           ctx.fillText('天体B轨道 · 稳定 · 计圈中 ' + pct.toFixed(0) + '%', cx, bottom);
         } else {
           ctx.fillText('天体B轨道 · 稳定 · 准备入轨', cx, bottom);
         }
-      } else if (a.closed && orbitStable) {
+      } else if (orbitStable) {
         ctx.fillText('天体B轨道 · 稳定 · 高度不符 (近:' + a.periAlt.toFixed(0) + ' 远:' + a.apoAlt.toFixed(0) + ')', cx, bottom);
-      } else if (a.closed) {
-        ctx.fillText('天体B轨道 · 未稳定 · 轨道漂移中', cx, bottom);
       } else {
-        ctx.fillText('天体B区域 · 轨道未闭合 · 调整油门与姿态', cx, bottom);
+        ctx.fillText('天体B轨道 · 未稳定', cx, bottom);
       }
     } else if (dominantBody === bodies[0]) {
       const dx0 = ship.x - bodies[0].x;
