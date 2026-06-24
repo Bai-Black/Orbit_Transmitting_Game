@@ -49,9 +49,9 @@ const TARGET_ORBIT_MAX = 300;
 const ORBIT_MIN = 40;
 const ORBIT_MAX = 500;
 const ESCAPE_DIST = 3000;
-const STABILITY_POS_THRESHOLD = 0.05;
-const STABILITY_VEL_THRESHOLD = 0.10;
-const STABILITY_CONFIRM_FRAMES = 10;
+const STABILITY_POS_THRESHOLD = 0.10;
+const STABILITY_VEL_THRESHOLD = 0.15;
+const STABILITY_CONFIRM_FRAMES = 5;
 
 let orbitData = null;
 let orbitReady = false;
@@ -289,7 +289,8 @@ function update(dt) {
         }
       }
     } else if (ship.throttle >= 0.01) {
-      stabilityConfirmCount = Math.max(0, stabilityConfirmCount - 1);
+      orbitStable = false;
+      stabilityConfirmCount = 0;
     }
 
     if (analysis && analysis.closed && analysis.periAlt > TARGET_ORBIT_MIN && analysis.apoAlt < TARGET_ORBIT_MAX && orbitStable) {
