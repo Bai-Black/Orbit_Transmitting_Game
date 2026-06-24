@@ -277,7 +277,7 @@ function update(dt) {
       lastApoAlt = -1;
     }
 
-    if (analysis && analysis.closed && analysis.periAlt > TARGET_ORBIT_MIN && analysis.apoAlt < TARGET_ORBIT_MAX && orbitStable) {
+    if (analysis && analysis.periAlt > TARGET_ORBIT_MIN && analysis.apoAlt < TARGET_ORBIT_MAX && orbitStable) {
       if (!orbitReady) {
         orbitReady = true;
         orbitAngleStart = Math.atan2(ship.y - bodies[1].y, ship.x - bodies[1].x);
@@ -685,7 +685,7 @@ function drawOrbitPrediction() {
   ctx.stroke();
   ctx.setLineDash([]);
 
-  if (!orbitData.analysis || !orbitData.analysis.closed || !orbitStable) return;
+  if (!orbitData || !orbitStable) return;
 
   const a = orbitData.analysis;
 
