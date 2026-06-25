@@ -645,7 +645,7 @@ function drawOverlay(title, subtitle) {
     const cy = canvas.height / 2 + 20;
     ctx.font = '14px monospace';
     ctx.fillStyle = '#aaa';
-    ctx.fillText('燃料消耗: ' + (500 - Math.max(0, 500 - fuelUsed * 50)).toFixed(0), cx, cy);
+    ctx.fillText('燃料效率: ' + Math.max(0, 500 - fuelUsed * 50).toFixed(0), cx, cy);
     const a = orbitData ? orbitData.analysis : null;
     if (a && a.apoAlt + a.periAlt > 0) {
       const circ = 1 - (a.apoAlt - a.periAlt) / (a.apoAlt + a.periAlt);
