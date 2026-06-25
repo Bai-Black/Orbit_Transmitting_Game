@@ -5,6 +5,7 @@
 ## 游戏截图
 
 黑白像素风格，类似 Chrome 恐龙小游戏的极简美学。
+<img width="961" height="564" alt="image" src="https://github.com/user-attachments/assets/60b028a5-099c-4608-a782-0db97e176ec2" />
 
 ## 操作方式
 
