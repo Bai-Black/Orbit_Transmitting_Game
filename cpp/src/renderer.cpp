@@ -14,10 +14,11 @@ Renderer::~Renderer() {
 }
 
 void Renderer::init() {
-    fontSmall = TTF_OpenFont("assets/font.ttf", 10);
-    fontMedium = TTF_OpenFont("assets/font.ttf", 12);
-    fontLarge = TTF_OpenFont("assets/font.ttf", 16);
-    fontTitle = TTF_OpenFont("assets/font.ttf", 48);
+    const char* fontPath = "C:/Windows/Fonts/msgothic.ttc";
+    fontSmall = TTF_OpenFont(fontPath, 10);
+    fontMedium = TTF_OpenFont(fontPath, 12);
+    fontLarge = TTF_OpenFont(fontPath, 16);
+    fontTitle = TTF_OpenFont(fontPath, 48);
     generateStars();
 }
 
