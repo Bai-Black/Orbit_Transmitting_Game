@@ -15,16 +15,16 @@ Vec2 gravity(Vec2 shipPos, Vec2 bodyPos, float bodyMass, float G) {
 
 void applyThrust(Ship& ship, float thrustMax, float dt) {
     if (ship.throttle > 0.01f) {
-        ship.vx += thrustMax * ship.throttle * std::cos(ship.angle) * dt;
-        ship.vy += thrustMax * ship.throttle * std::sin(ship.angle) * dt;
+        ship.vel.x += thrustMax * ship.throttle * std::cos(ship.angle) * dt;
+        ship.vel.y += thrustMax * ship.throttle * std::sin(ship.angle) * dt;
     }
 }
 
 void integrate(Ship& ship, Vec2 accel, float dt) {
-    ship.vx += accel.x * dt;
-    ship.vy += accel.y * dt;
-    ship.pos.x += ship.vx * dt;
-    ship.pos.y += ship.vy * dt;
+    ship.vel.x += accel.x * dt;
+    ship.vel.y += accel.y * dt;
+    ship.pos.x += ship.vel.x * dt;
+    ship.pos.y += ship.vel.y * dt;
 }
 
 }

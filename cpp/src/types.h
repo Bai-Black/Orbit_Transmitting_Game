@@ -1,6 +1,10 @@
 #pragma once
+#define _USE_MATH_DEFINES
+#include <cmath>
 #include <vector>
 #include <string>
+
+static constexpr float PI = 3.14159265358979323846f;
 
 struct Vec2 {
     float x = 0, y = 0;

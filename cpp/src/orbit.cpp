@@ -29,14 +29,14 @@ OrbitAnalysis analyze(Ship& ship, Body& body, float G, float fixedDt) {
     float dx = ship.pos.x - body.pos.x;
     float dy = ship.pos.y - body.pos.y;
     float dist = std::sqrt(dx * dx + dy * dy);
-    float speed = std::sqrt(ship.vx * ship.vx + ship.vy * ship.vy);
+    float speed = std::sqrt(ship.vel.x * ship.vel.x + ship.vel.y * ship.vel.y);
     float GM = G * body.mass;
     float a = 1.0f / (2.0f / dist - speed * speed / GM);
-    float period = 2.0f * (float)M_PI * std::sqrt(std::abs(a) * std::abs(a) * std::abs(a) / GM);
+    float period = 2.0f * PI * std::sqrt(std::abs(a) * std::abs(a) * std::abs(a) / GM);
     int steps = std::min((int)std::ceil(period / fixedDt), 3000);
 
     float px = ship.pos.x, py = ship.pos.y;
-    float pvx = ship.vx, pvy = ship.vy;
+    float pvx = ship.vel.x, pvy = ship.vel.y;
     float minDist = dist, maxDist = dist;
     Vec2 periPt = {px, py}, apoPt = {px, py};
 

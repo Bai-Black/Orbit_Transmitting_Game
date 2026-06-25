@@ -1,5 +1,6 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
+#include <windows.h>
 #include "game.h"
 #include "input.h"
 #include "renderer.h"
@@ -16,7 +17,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    SDL_Window* window = SDL_CreateWindow("轨道转移",
+    SDL_Window* window = SDL_CreateWindow("Orbit Transfer",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         1280, 720, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
     SDL_Renderer* sdlRenderer = SDL_CreateRenderer(window, -1,
@@ -78,4 +79,8 @@ int main(int argc, char* argv[]) {
     TTF_Quit();
     SDL_Quit();
     return 0;
+}
+
+extern "C" int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
+    return main(__argc, __argv);
 }

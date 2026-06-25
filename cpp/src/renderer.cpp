@@ -1,4 +1,5 @@
 #include "renderer.h"
+#define _USE_MATH_DEFINES
 #include <cmath>
 #include <algorithm>
 
@@ -135,7 +136,7 @@ void Renderer::drawShip(const Ship& ship, const Camera& cam, int screenW, int sc
 
 void Renderer::drawHUD(const Ship& ship, const Body* bodies, float fuelUsed, GameState state,
                         bool orbitStable, bool orbitReady, float orbitAngleTotal, int screenW, int screenH) {
-    float speed = std::sqrt(ship.vx * ship.vx + ship.vy * ship.vy);
+    float speed = std::sqrt(ship.vel.x * ship.vel.x + ship.vel.y * ship.vel.y);
     float dist1 = std::sqrt((ship.pos.x - bodies[0].pos.x) * (ship.pos.x - bodies[0].pos.x) +
                             (ship.pos.y - bodies[0].pos.y) * (ship.pos.y - bodies[0].pos.y)) - bodies[0].radius;
     float dist2 = std::sqrt((ship.pos.x - bodies[1].pos.x) * (ship.pos.x - bodies[1].pos.x) +
@@ -354,11 +355,11 @@ void Renderer::drawLine(int x1, int y1, int x2, int y2, SDL_Color color) {
 
 void Renderer::drawDashedCircle(int cx, int cy, int r, SDL_Color color, int dashLen, int gapLen) {
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-    float circ = 2 * (float)M_PI * r;
+    float circ = 2 * PI * r;
     int total = dashLen + gapLen;
     for (float a = 0; a < 360; a += 0.5f) {
-        float rad = a * (float)M_PI / 180.0f;
-        int seg = ((int)(a * r / 180.0f * (float)M_PI)) % total;
+        float rad = a * PI / 180.0f;
+        int seg = ((int)(a * r / 180.0f * PI)) % total;
         if (seg < dashLen) {
             int x = cx + (int)(std::cos(rad) * r);
             int y = cy + (int)(std::sin(rad) * r);
