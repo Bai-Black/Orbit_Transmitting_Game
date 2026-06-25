@@ -20,7 +20,8 @@ public:
     void drawTrail(const std::vector<Vec2>& trail, const Camera& cam, int screenW, int screenH);
     void drawShip(const Ship& ship, const Camera& cam, int screenW, int screenH);
     void drawHUD(const Ship& ship, const Body* bodies, float fuelUsed, GameState state,
-                 bool orbitStable, bool orbitReady, float orbitAngleTotal, int screenW, int screenH);
+                 bool orbitStable, bool orbitReady, float orbitAngleTotal,
+                 bool dominantIsB, const OrbitAnalysis* analysis, int screenW, int screenH);
     void drawTitle(int screenW, int screenH);
     void drawOverlay(const char* title, const char* subtitle, int score, float fuelUsed,
                      const OrbitAnalysis* analysis, int screenW, int screenH);

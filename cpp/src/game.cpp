@@ -236,7 +236,8 @@ void Game::render() {
     for (int i = 0; i < 2; i++) renderer.drawBody(bodies[i], camera, w, h);
     renderer.drawOrbitPrediction(orbitData, bodies[1], orbitStable, camera, w, h);
     renderer.drawShip(ship, camera, w, h);
-    renderer.drawHUD(ship, bodies, fuelUsed, state, orbitStable, orbitReady, orbitAngleTotal, w, h);
+    renderer.drawHUD(ship, bodies, fuelUsed, state, orbitStable, orbitReady, orbitAngleTotal,
+                     dominantBody == &bodies[1], orbitData ? &orbitData->analysis : nullptr, w, h);
     renderer.drawOffscreenIndicator(bodies[1], ship, camera, w, h);
     renderer.drawMissionObjective(w, h);
 

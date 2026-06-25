@@ -15,7 +15,7 @@ Renderer::~Renderer() {
 }
 
 void Renderer::init() {
-    const char* fontPath = "C:/Windows/Fonts/msgothic.ttc";
+    const char* fontPath = "C:/Windows/Fonts/simsun.ttc";
     fontSmall = TTF_OpenFont(fontPath, 10);
     fontMedium = TTF_OpenFont(fontPath, 12);
     fontLarge = TTF_OpenFont(fontPath, 16);
@@ -139,7 +139,8 @@ void Renderer::drawShip(const Ship& ship, const Camera& cam, int screenW, int sc
 }
 
 void Renderer::drawHUD(const Ship& ship, const Body* bodies, float fuelUsed, GameState state,
-                        bool orbitStable, bool orbitReady, float orbitAngleTotal, int screenW, int screenH) {
+                        bool orbitStable, bool orbitReady, float orbitAngleTotal,
+                        bool dominantIsB, const OrbitAnalysis* analysis, int screenW, int screenH) {
     float speed = std::sqrt(ship.vel.x * ship.vel.x + ship.vel.y * ship.vel.y);
     float dist1 = std::sqrt((ship.pos.x - bodies[0].pos.x) * (ship.pos.x - bodies[0].pos.x) +
                             (ship.pos.y - bodies[0].pos.y) * (ship.pos.y - bodies[0].pos.y)) - bodies[0].radius;
@@ -163,8 +164,23 @@ void Renderer::drawHUD(const Ship& ship, const Body* bodies, float fuelUsed, Gam
     if (state == GameState::PLAYING) {
         if (ship.throttle >= 0.01f) {
             drawText("变轨中", screenW / 2, screenH - 12, {255, 255, 255, 255}, fontMedium);
+        } else if (dominantIsB && analysis) {
+            if (analysis->periAlt > 60 && analysis->apoAlt < 300 && orbitStable) {
+                if (orbitReady) {
+                    float pct = std::min(100.0f, std::abs(orbitAngleTotal) / (2 * PI) * 100);
+                    char buf[64];
+                    snprintf(buf, sizeof(buf), "天体B轨道 . 稳定 . 计圈中 %.0f%%", pct);
+                    drawText(buf, screenW / 2, screenH - 12, {255, 255, 255, 255}, fontMedium);
+                } else {
+                    drawText("天体B轨道 . 稳定 . 准备入轨", screenW / 2, screenH - 12, {255, 255, 255, 255}, fontMedium);
+                }
+            } else if (orbitStable) {
+                drawText("天体B轨道 . 稳定 . 高度不符", screenW / 2, screenH - 12, {255, 255, 255, 255}, fontMedium);
+            } else {
+                drawText("天体B轨道 . 未稳定", screenW / 2, screenH - 12, {255, 255, 255, 255}, fontMedium);
+            }
         } else {
-            drawText("无轨道", screenW / 2, screenH - 12, {255, 255, 255, 255}, fontMedium);
+            drawText("天体A轨道", screenW / 2, screenH - 12, {255, 255, 255, 255}, fontMedium);
         }
     }
 
@@ -331,7 +347,7 @@ void Renderer::drawText(const char* text, int x, int y, SDL_Color color, TTF_Fon
     if (center) {
         dst = {x - surface->w / 2, y - surface->h / 2, surface->w, surface->h};
     } else {
-        dst = {x, y - surface->h / 2, surface->w, surface->h};
+        dst = {x - surface->w, y - surface->h / 2, surface->w, surface->h};
     }
     SDL_RenderCopy(renderer, texture, nullptr, &dst);
     SDL_DestroyTexture(texture);
