@@ -219,7 +219,7 @@ void Renderer::drawOverlay(const char* title, const char* subtitle, int score, f
     SDL_RenderFillRect(renderer, &full);
 
     drawText(title, screenW / 2, screenH / 2 - 70, {255, 255, 255, 255}, fontTitle);
-    drawText(subtitle, screenW / 2, screenH / 2 - 40, {136, 136, 136, 255}, fontLarge);
+    drawText(subtitle, screenW / 2, screenH / 2 - 25, {136, 136, 136, 255}, fontLarge);
 
     if (score > 0) {
         char buf[128];
