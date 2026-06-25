@@ -509,6 +509,7 @@ function drawHUD() {
   ctx.fillText('距 A: ' + dist1.toFixed(0), 12, 40);
   ctx.fillText('距 B: ' + dist2.toFixed(0), 12, 56);
   ctx.fillText('油门: ' + bar + ' ' + (ship.throttle * 100).toFixed(0) + '%', 12, 72);
+  ctx.fillText('燃料: ' + fuelUsed.toFixed(1), 12, 88);
 
   if (gameState === 'PLAYING' && debugMode && dominantBody === bodies[1] && orbitData && orbitData.analysis) {
     const a = orbitData.analysis;
@@ -851,6 +852,8 @@ function render() {
   ctx.font = '14px monospace';
   ctx.textAlign = 'center';
   ctx.fillText('任务目标：将飞行器从天体A变轨至天体B', canvas.width / 2, 24);
+  ctx.font = '12px monospace';
+  ctx.fillText('尽可能节省燃料 · 使轨道尽可能圆', canvas.width / 2, 42);
 
   if (gameState === 'WIN') drawOverlay('任 务 完 成', '成功变轨至目标天体');
   if (gameState === 'CRASH') drawOverlay('坠 毁', '飞行器撞击天体表面');
