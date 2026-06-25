@@ -206,12 +206,12 @@ function analyzeOrbit(body) {
 function update(dt) {
   if (gameState !== 'PLAYING') return;
 
-  if (keys['ArrowLeft']) ship.angle -= ROT_SPEED * dt;
-  if (keys['ArrowRight']) ship.angle += ROT_SPEED * dt;
+  if (keys['ArrowLeft'] || keys['KeyA']) ship.angle -= ROT_SPEED * dt;
+  if (keys['ArrowRight'] || keys['KeyD']) ship.angle += ROT_SPEED * dt;
 
-  if (keys['ArrowUp']) {
+  if (keys['ArrowUp'] || keys['KeyW']) {
     ship.throttle = Math.min(1, ship.throttle + 1.5 * dt);
-  } else if (keys['ArrowDown']) {
+  } else if (keys['ArrowDown'] || keys['KeyS']) {
     ship.throttle = Math.max(0, ship.throttle - 1.5 * dt);
   } else {
     ship.throttle = Math.max(0, ship.throttle - 0.3 * dt);
@@ -524,9 +524,9 @@ function drawHUD() {
   ctx.fillStyle = '#666';
   ctx.font = '10px monospace';
   const rx = canvas.width - 10;
-  ctx.fillText('← →  旋转姿态', rx, canvas.height - 44);
-  ctx.fillText('↑ ↓   控制油门', rx, canvas.height - 32);
-  ctx.fillText('空格/ESC 暂停', rx, canvas.height - 20);
+  ctx.fillText('← → / A D  旋转姿态', rx, canvas.height - 44);
+  ctx.fillText('↑ ↓ / W S  控制油门', rx, canvas.height - 32);
+  ctx.fillText('空格/ESC 暂停  F1 Debug', rx, canvas.height - 20);
   ctx.textAlign = 'left';
 
   if (gameState === 'PLAYING') {
@@ -849,8 +849,9 @@ function gameLoop(timestamp) {
 
 window.addEventListener('keydown', function(e) {
   keys[e.code] = true;
-  if (e.key === 'd' || e.key === 'D') {
+  if (e.key === 'F1') {
     debugMode = !debugMode;
+    e.preventDefault();
   }
   if (e.code === 'Space' || e.code === 'Escape') {
     e.preventDefault();
@@ -860,7 +861,7 @@ window.addEventListener('keydown', function(e) {
       resetGame();
     }
   }
-  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyA', 'KeyS', 'KeyD'].includes(e.code)) {
     e.preventDefault();
   }
 });
