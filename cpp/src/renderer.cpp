@@ -218,28 +218,28 @@ void Renderer::drawOverlay(const char* title, const char* subtitle, int score, f
     SDL_Rect full = {0, 0, screenW, screenH};
     SDL_RenderFillRect(renderer, &full);
 
-    drawText(title, screenW / 2, screenH / 2 - 40, {255, 255, 255, 255}, fontTitle);
-    drawText(subtitle, screenW / 2, screenH / 2 - 10, {136, 136, 136, 255}, fontLarge);
+    drawText(title, screenW / 2, screenH / 2 - 60, {255, 255, 255, 255}, fontTitle);
+    drawText(subtitle, screenW / 2, screenH / 2 - 30, {136, 136, 136, 255}, fontLarge);
 
     if (score > 0) {
         char buf[128];
         float fuelScore = std::max(0.0f, 500.0f - fuelUsed * 50);
         snprintf(buf, sizeof(buf), "燃料效率: %.0f", fuelScore);
-        drawText(buf, screenW / 2, screenH / 2 + 20, {170, 170, 170, 255}, fontLarge);
+        drawText(buf, screenW / 2, screenH / 2 + 0, {170, 170, 170, 255}, fontLarge);
         if (analysis && analysis->apoAlt + analysis->periAlt > 0) {
             float circ = 1.0f - (analysis->apoAlt - analysis->periAlt) / (analysis->apoAlt + analysis->periAlt);
             snprintf(buf, sizeof(buf), "轨道圆度: %.0f", circ * 500);
-            drawText(buf, screenW / 2, screenH / 2 + 45, {170, 170, 170, 255}, fontLarge);
+            drawText(buf, screenW / 2, screenH / 2 + 25, {170, 170, 170, 255}, fontLarge);
         }
         snprintf(buf, sizeof(buf), "总分: %d", score);
-        drawText(buf, screenW / 2, screenH / 2 + 80, {255, 255, 255, 255}, fontLarge);
+        drawText(buf, screenW / 2, screenH / 2 + 60, {255, 255, 255, 255}, fontLarge);
     }
 
     static Uint32 lastBlink = 0;
     Uint32 now = SDL_GetTicks();
     if (now - lastBlink > 500) lastBlink = now;
     if ((now / 500) % 2 == 0)
-        drawText("[ 按空格键重新开始 ]", screenW / 2, screenH / 2 + 120, {255, 255, 255, 255}, fontLarge);
+        drawText("[ 按空格键重新开始 ]", screenW / 2, screenH / 2 + 100, {255, 255, 255, 255}, fontLarge);
 }
 
 void Renderer::drawPause(int screenW, int screenH) {
