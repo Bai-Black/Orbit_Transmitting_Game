@@ -13,9 +13,11 @@ void Game::init() {
     reset();
 }
 
+// 重置游戏：将飞行器放回天体A的初始圆轨道
 void Game::reset() {
     Body& b = bodies[0];
     float r = b.radius + ORBIT_R_OFFSET;
+    // 圆轨道速度：v = sqrt(GM/r)
     float v = std::sqrt(G * b.mass / r);
     ship.pos = {b.pos.x + r, b.pos.y};
     ship.vel = {0, -v};
@@ -45,6 +47,7 @@ void Game::reset() {
     orbitData = nullptr;
 }
 
+// 主更新循环：输入处理→SOI检测→引力计算→推力→积分→碰撞检测→轨道判定
 void Game::update(float dt) {
     if (state != GameState::PLAYING) return;
 
@@ -59,7 +62,8 @@ void Game::update(float dt) {
         ship.throttle = std::max(0.0f, ship.throttle - 0.3f * dt);
     }
 
-    // SOI detection
+    // SOI（引力范围）检测：确定飞行器受哪个天体主导
+    // 使用迟滞机制防止边界频繁切换
     float minDist = 1e30f;
     Body* closest = &bodies[0];
     for (int i = 0; i < 2; i++) {
@@ -109,7 +113,7 @@ void Game::update(float dt) {
         }
     }
 
-    // Orbit B
+    // 轨道B检测：当飞行器在天体B轨道范围内时，进行轨道分析和稳定性判定
     float dx2 = ship.pos.x - bodies[1].pos.x;
     float dy2 = ship.pos.y - bodies[1].pos.y;
     float dist2 = std::sqrt(dx2 * dx2 + dy2 * dy2);
@@ -157,7 +161,8 @@ void Game::update(float dt) {
                 if (dA < -3.14159f) dA += 2 * 3.14159f;
                 orbitAngleTotal += dA;
                 orbitAngleStart = cur;
-                if (std::abs(orbitAngleTotal) >= 2 * 3.14159f) {
+                // 胜利条件：稳定轨道 + 目标范围内 + 完成一整圈
+                if (std::abs(orbitAngleTotal) >= 2 * PI) {
                     const auto& a = orbitData->analysis;
                     float fuelScore = std::max(0.0f, 500.0f - fuelUsed * 50);
                     float circ = (a.apoAlt + a.periAlt > 0) ? 1.0f - (a.apoAlt - a.periAlt) / (a.apoAlt + a.periAlt) : 0;

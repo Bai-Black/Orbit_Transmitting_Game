@@ -4,6 +4,7 @@
 
 namespace orbit {
 
+// 预测轨迹：从当前位置/速度向前模拟20秒
 std::vector<Vec2> predict(Vec2 pos, Vec2 vel, Body& body, float G, float fixedDt) {
     std::vector<Vec2> points;
     Vec2 px = pos, py = vel;
@@ -24,6 +25,10 @@ std::vector<Vec2> predict(Vec2 pos, Vec2 vel, Body& body, float G, float fixedDt
     return points;
 }
 
+// 轨道分析：基于开普勒公式计算轨道参数
+// 1. 用 vis-viva 公式计算半长轴 a
+// 2. 用开普勒第三定律计算轨道周期 T
+// 3. 模拟一个周期，找近远地点和闭合性
 OrbitAnalysis analyze(Ship& ship, Body& body, float G, float fixedDt) {
     OrbitAnalysis result;
     float dx = ship.pos.x - body.pos.x;
@@ -31,7 +36,9 @@ OrbitAnalysis analyze(Ship& ship, Body& body, float G, float fixedDt) {
     float dist = std::sqrt(dx * dx + dy * dy);
     float speed = std::sqrt(ship.vel.x * ship.vel.x + ship.vel.y * ship.vel.y);
     float GM = G * body.mass;
+    // vis-viva 公式：1/a = 2/r - v²/(GM)
     float a = 1.0f / (2.0f / dist - speed * speed / GM);
+    // 开普勒第三定律：T = 2π√(a³/GM)
     float period = 2.0f * PI * std::sqrt(std::abs(a) * std::abs(a) * std::abs(a) / GM);
     int steps = std::min((int)std::ceil(period / fixedDt), 3000);
 
@@ -49,6 +56,7 @@ OrbitAnalysis analyze(Ship& ship, Body& body, float G, float fixedDt) {
         float d = std::sqrt((px - body.pos.x) * (px - body.pos.x) + (py - body.pos.y) * (py - body.pos.y));
         if (d < minDist) { minDist = d; periPt = {px, py}; }
         if (d > maxDist) { maxDist = d; apoPt = {px, py}; }
+        // 检查闭合：周期后半段若回到起点附近即闭合
         float dd = std::sqrt((px - ship.pos.x) * (px - ship.pos.x) + (py - ship.pos.y) * (py - ship.pos.y));
         if (i > steps * 0.5 && dd < std::abs(a) * 0.15f) {
             result.closed = true;

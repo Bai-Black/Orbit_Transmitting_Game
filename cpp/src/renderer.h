@@ -47,6 +47,7 @@ private:
     std::vector<Star> stars;
     SDL_Texture* starTexture = nullptr;
 
+    // 文本对齐：0=居中, 1=左对齐, 2=右对齐
     void drawText(const char* text, int x, int y, SDL_Color color, TTF_Font* font, int align = 0);
     void drawCircle(int cx, int cy, int r, SDL_Color color, bool filled = false);
     void drawLine(int x1, int y1, int x2, int y2, SDL_Color color);
