@@ -149,17 +149,17 @@ void Renderer::drawHUD(const Ship& ship, const Body* bodies, float fuelUsed, Gam
 
     char buf[128];
     snprintf(buf, sizeof(buf), "速度: %.1f", speed);
-    drawText(buf, 12, 24, {255, 255, 255, 255}, fontMedium, false);
+    drawText(buf, 12, 24, {255, 255, 255, 255}, fontMedium, 1);
     snprintf(buf, sizeof(buf), "距 A: %.0f", dist1);
-    drawText(buf, 12, 40, {255, 255, 255, 255}, fontMedium, false);
+    drawText(buf, 12, 40, {255, 255, 255, 255}, fontMedium, 1);
     snprintf(buf, sizeof(buf), "距 B: %.0f", dist2);
-    drawText(buf, 12, 56, {255, 255, 255, 255}, fontMedium, false);
+    drawText(buf, 12, 56, {255, 255, 255, 255}, fontMedium, 1);
 
     int filled = (int)(ship.throttle * 30);
     snprintf(buf, sizeof(buf), "油门: [%.*s%*s] %.0f%%", filled, "==============================", 30 - filled, "", ship.throttle * 100);
-    drawText(buf, 12, 72, {255, 255, 255, 255}, fontMedium, false);
+    drawText(buf, 12, 72, {255, 255, 255, 255}, fontMedium, 1);
     snprintf(buf, sizeof(buf), "燃料: %.1f", fuelUsed);
-    drawText(buf, 12, 88, {255, 255, 255, 255}, fontMedium, false);
+    drawText(buf, 12, 88, {255, 255, 255, 255}, fontMedium, 1);
 
     if (state == GameState::PLAYING) {
         if (ship.throttle >= 0.01f) {
@@ -184,9 +184,9 @@ void Renderer::drawHUD(const Ship& ship, const Body* bodies, float fuelUsed, Gam
         }
     }
 
-    drawText("← → / A D  旋转姿态", screenW - 10, screenH - 44, {102, 102, 102, 255}, fontSmall, false);
-    drawText("↑ ↓ / W S  控制油门", screenW - 10, screenH - 32, {102, 102, 102, 255}, fontSmall, false);
-    drawText("空格/ESC 暂停  F1 Debug", screenW - 10, screenH - 20, {102, 102, 102, 255}, fontSmall, false);
+    drawText("← → / A D  旋转姿态", screenW - 10, screenH - 44, {102, 102, 102, 255}, fontSmall, 2);
+    drawText("↑ ↓ / W S  控制油门", screenW - 10, screenH - 32, {102, 102, 102, 255}, fontSmall, 2);
+    drawText("空格/ESC 暂停  F1 Debug", screenW - 10, screenH - 20, {102, 102, 102, 255}, fontSmall, 2);
 }
 
 void Renderer::drawTitle(int screenW, int screenH) {
@@ -290,7 +290,7 @@ void Renderer::drawOrbitPrediction(const OrbitData* data, const Body& body, bool
 
     drawDashedCircle(sx, sy, (int)(60 + body.radius), {51, 51, 51, 255}, 4, 6);
     drawDashedCircle(sx, sy, (int)(300 + body.radius), {51, 51, 51, 255}, 4, 6);
-    drawText("目标轨道", sx + (int)(300 + body.radius) + 4, sy, {68, 68, 68, 255}, fontLarge, false);
+    drawText("目标轨道", sx + (int)(300 + body.radius) + 4, sy, {68, 68, 68, 255}, fontLarge, 1);
 
     if (!data) return;
 
@@ -309,7 +309,7 @@ void Renderer::drawOrbitPrediction(const OrbitData* data, const Body& body, bool
         drawCircle(sx, sy, r, {102, 102, 102, 255}, false);
         char buf[32];
         snprintf(buf, sizeof(buf), "h=%.0f", a.avgAlt);
-        drawText(buf, sx + r + 6, sy, {170, 170, 170, 255}, fontSmall, false);
+        drawText(buf, sx + r + 6, sy, {170, 170, 170, 255}, fontSmall, 1);
     } else {
         int periR = (int)(a.periAlt + body.radius);
         int apoR = (int)(a.apoAlt + body.radius);
@@ -338,16 +338,18 @@ void Renderer::drawMissionObjective(int screenW, int screenH) {
     drawText("尽可能节省燃料 · 使轨道尽可能圆", screenW / 2, 42, {136, 136, 136, 255}, fontMedium);
 }
 
-void Renderer::drawText(const char* text, int x, int y, SDL_Color color, TTF_Font* font, bool center) {
+void Renderer::drawText(const char* text, int x, int y, SDL_Color color, TTF_Font* font, int align) {
     if (!font || !text || !text[0]) return;
     SDL_Surface* surface = TTF_RenderUTF8_Blended(font, text, color);
     if (!surface) return;
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
     SDL_Rect dst;
-    if (center) {
+    if (align == 0) {
         dst = {x - surface->w / 2, y - surface->h / 2, surface->w, surface->h};
-    } else {
+    } else if (align == 2) {
         dst = {x - surface->w, y - surface->h / 2, surface->w, surface->h};
+    } else {
+        dst = {x, y - surface->h / 2, surface->w, surface->h};
     }
     SDL_RenderCopy(renderer, texture, nullptr, &dst);
     SDL_DestroyTexture(texture);
