@@ -32,6 +32,7 @@ public:
     void drawMissionObjective(int screenW, int screenH);
 
     void generateStars();
+    void getWindowSize(int& w, int& h);
 
 private:
     SDL_Window* window;

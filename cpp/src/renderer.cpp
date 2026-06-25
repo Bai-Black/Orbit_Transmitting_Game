@@ -56,6 +56,10 @@ void Renderer::present() {
     SDL_RenderPresent(renderer);
 }
 
+void Renderer::getWindowSize(int& w, int& h) {
+    SDL_GetWindowSize(window, &w, &h);
+}
+
 void Renderer::drawBackground() {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);

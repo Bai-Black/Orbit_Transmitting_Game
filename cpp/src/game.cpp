@@ -221,7 +221,7 @@ void Game::update(float dt) {
 
 void Game::render() {
     int w, h;
-    SDL_GetWindowSize(SDL_GL_GetCurrentWindow(), &w, &h);
+    renderer.getWindowSize(w, h);
 
     if (state == GameState::TITLE) {
         renderer.drawTitle(w, h);
@@ -258,7 +258,7 @@ void Game::toggleDebug() { debugMode = !debugMode; }
 bool Game::handlePauseClick(int mx, int my) {
     if (state != GameState::PAUSED) return false;
     int w, h;
-    SDL_GetWindowSize(SDL_GL_GetCurrentWindow(), &w, &h);
+    renderer.getWindowSize(w, h);
     int bw = 180, bh = 40, cx = w / 2;
     int cy1 = h / 2 - 10, cy2 = h / 2 + 50;
 
