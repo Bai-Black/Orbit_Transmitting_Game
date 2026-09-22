@@ -968,11 +968,14 @@ function drawHUD() {
   }
 }
 
-function drawAssociationCredit() {
-  ctx.fillStyle = '#555';
-  ctx.font = '12px monospace';
+function drawAssociationCredit(position, customY) {
+  const y = Number.isFinite(customY)
+    ? customY
+    : (position === 'top' ? Math.max(22, Math.min(30, canvas.height * 0.06)) : canvas.height - 16);
+  ctx.fillStyle = '#aaa';
+  ctx.font = 'bold 18px monospace';
   ctx.textAlign = 'center';
-  ctx.fillText('西南交通大学科幻协会', canvas.width / 2, canvas.height - 16);
+  ctx.fillText('西南交通大学科幻协会', canvas.width / 2, y);
 }
 
 function drawTitle() {
@@ -980,7 +983,14 @@ function drawTitle() {
   drawStars();
 
   const compactTouchLayout = touchEnabled && canvas.height < 500;
-  const titleY = compactTouchLayout ? 52 : canvas.height / 2 - 80;
+  const baseTitleY = compactTouchLayout ? 52 : canvas.height / 2 - 80;
+  const baseCy = compactTouchLayout ? canvas.height * 0.39 : canvas.height / 2 + 20;
+  const instructionOffset = compactTouchLayout ? 70 : 80;
+  const basePromptY = baseCy + instructionOffset + 90;
+  const desiredTitleOffset = touchEnabled ? Math.max(48, Math.min(72, canvas.height * 0.17)) : 0;
+  const availableTitleOffset = touchEnabled ? Math.max(0, canvas.height - 18 - basePromptY) : 0;
+  const mobileTitleOffset = Math.min(desiredTitleOffset, availableTitleOffset);
+  const titleY = baseTitleY + mobileTitleOffset;
   ctx.fillStyle = '#fff';
   const titleSize = Math.max(28, Math.min(48, canvas.width / 12, canvas.height / 7));
   ctx.font = 'bold ' + titleSize + 'px monospace';
@@ -991,8 +1001,8 @@ function drawTitle() {
   ctx.fillText('ORBITAL TRANSFER', canvas.width / 2, titleY + 35);
 
   const cx = canvas.width / 2;
-  const cy = compactTouchLayout ? canvas.height * 0.39 : canvas.height / 2 + 20;
-  const instructionY = compactTouchLayout ? cy + 70 : cy + 80;
+  const cy = baseCy + mobileTitleOffset;
+  const instructionY = cy + instructionOffset;
 
   ctx.strokeStyle = '#fff';
   ctx.lineWidth = 2;
@@ -1028,25 +1038,28 @@ function drawTitle() {
     ctx.fillText(startPrompt, cx, instructionY + 90);
   }
 
-  drawAssociationCredit();
+  const titleCreditY = touchEnabled ? Math.max(22, (titleY - titleSize * 0.9) / 2) : undefined;
+  drawAssociationCredit(touchEnabled ? 'top' : 'bottom', titleCreditY);
 }
 
 function drawOverlay(title, subtitle) {
   ctx.fillStyle = 'rgba(0,0,0,0.7)';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  const overlayOffset = touchEnabled ? 18 : 12;
+
   ctx.fillStyle = '#fff';
   ctx.font = 'bold 36px monospace';
   ctx.textAlign = 'center';
-  ctx.fillText(title, canvas.width / 2, canvas.height / 2 - 40);
+  ctx.fillText(title, canvas.width / 2, canvas.height / 2 - 40 + overlayOffset);
 
   ctx.font = '14px monospace';
   ctx.fillStyle = '#888';
-  ctx.fillText(subtitle, canvas.width / 2, canvas.height / 2 - 10);
+  ctx.fillText(subtitle, canvas.width / 2, canvas.height / 2 - 10 + overlayOffset);
 
   if (title === '任 务 完 成') {
     const cx = canvas.width / 2;
-    const cy = canvas.height / 2 + 20;
+    const cy = canvas.height / 2 + 20 + overlayOffset;
     ctx.font = '14px monospace';
     ctx.fillStyle = '#aaa';
     if (touchEnabled) {
@@ -1070,11 +1083,11 @@ function drawOverlay(title, subtitle) {
   if (blink) {
     ctx.fillStyle = '#fff';
     ctx.font = '14px monospace';
-    const restartY = canvas.height / 2 + (touchEnabled && title === '任 务 完 成' ? 125 : 90);
+    const restartY = canvas.height / 2 + (touchEnabled && title === '任 务 完 成' ? 125 : 90) + overlayOffset;
     ctx.fillText(touchEnabled ? '[ 点击屏幕重新开始 ]' : '[ 按空格键重新开始 ]', canvas.width / 2, restartY);
   }
 
-  drawAssociationCredit();
+  drawAssociationCredit('top');
 }
 
 function togglePause() {

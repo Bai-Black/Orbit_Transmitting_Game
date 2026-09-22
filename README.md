@@ -51,8 +51,8 @@
 
 ## 版本
 
-### HTML/JS 版 (v2.1.2)
-- 单文件 `Orbit_Transfer_v2.1.2.html`，浏览器直接打开
+### HTML/JS 版 (v2.1.4)
+- 单文件 `Orbit_Transfer_v2.1.4.html`，浏览器直接打开
 - 零依赖，纯 JavaScript 实现
 
 ### C++ 版 (v2.0.8)
@@ -104,7 +104,7 @@ g++ -std=c++17 $(pkg-config --cflags sdl2 SDL2_ttf) \
 ```
 Orbit_Transmitting_Game/
 ├── index.html                    # GitHub Pages 入口
-├── Orbit_Transfer_v2.1.2.html   # HTML/JS 2.1.2 版本
+├── Orbit_Transfer_v2.1.4.html   # HTML/JS 2.1.4 版本
 ├── cpp/                           # C++ 版本
 │   ├── src/
 │   │   ├── main.cpp              # 入口、SDL 主循环
